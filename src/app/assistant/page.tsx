@@ -10,11 +10,7 @@ export default async function AssistantPage() {
   if (!status.businessExists) redirect("/setup");
   return (
     <AppShell>
-      <h1 className="text-2xl font-semibold text-gray-900">AI Assistant</h1>
-      <p className="mt-1 text-sm text-gray-600">
-        Optional online explanations built from CashPilot&apos;s read-only calculation tools.
-      </p>
-      <div className="mt-6">
+      <div className="h-[calc(100dvh-10rem)] min-h-[560px] md:h-[calc(100dvh-3rem)]">
         <AssistantPanel initialStatus={status} />
       </div>
     </AppShell>

@@ -90,6 +90,8 @@ export function InvoiceActions({ invoiceId, lifecycle, outstandingPaise, default
         )}
       </div>
 
+      {isIssued && <p className="text-sm text-gray-600">Issued invoices are locked. Record payments instead.</p>}
+
       {actionError && (
         <p role="alert" className="text-sm text-red-600">
           {actionError}

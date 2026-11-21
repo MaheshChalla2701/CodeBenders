@@ -57,6 +57,14 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
           >
             Edit
           </Link>
+          {customer.archivedAt === null && (
+            <Link
+              href={`/invoices/new?customerId=${customer.id}`}
+              className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              Add invoice
+            </Link>
+          )}
           <ArchiveButton customerId={customer.id} archived={customer.archivedAt !== null} />
         </div>
       </div>
@@ -142,9 +150,16 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
                     </td>
                     <td className="px-4 py-3 text-gray-700">{invoice.status}</td>
                     <td className="px-4 py-3 text-right">
-                      <Link href={`/invoices/${invoice.id}`} className="text-gray-900 underline">
-                        View
-                      </Link>
+                      <div className="flex justify-end gap-3">
+                        {invoice.lifecycle === "DRAFT" && (
+                          <Link href={`/invoices/${invoice.id}/edit`} className="text-gray-900 underline">
+                            Edit
+                          </Link>
+                        )}
+                        <Link href={`/invoices/${invoice.id}`} className="text-gray-900 underline">
+                          View
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

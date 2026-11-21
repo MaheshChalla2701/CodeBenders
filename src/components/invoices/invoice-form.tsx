@@ -33,6 +33,8 @@ interface InvoiceFormProps {
   customers: CustomerOption[];
   defaultDate: string;
   initial?: Partial<InvoiceFormInitial>;
+  /** Preselected customer for create mode; ignored when absent. */
+  initialCustomerId?: string;
   invoiceId?: string;
 }
 
@@ -91,9 +93,16 @@ function FieldError({ messages }: { messages?: string[] }) {
   return <p className="mt-1 text-sm text-red-600">{messages[0]}</p>;
 }
 
-export function InvoiceForm({ mode, customers, defaultDate, initial, invoiceId }: InvoiceFormProps) {
+export function InvoiceForm({
+  mode,
+  customers,
+  defaultDate,
+  initial,
+  initialCustomerId,
+  invoiceId,
+}: InvoiceFormProps) {
   const [values, setValues] = useState<HeaderValues>({
-    customerId: initial?.customerId ?? "",
+    customerId: initial?.customerId ?? initialCustomerId ?? "",
     invoiceNumber: initial?.invoiceNumber ?? "",
     issueDate: initial?.issueDate ?? defaultDate,
     dueDate: initial?.dueDate ?? defaultDate,
@@ -149,7 +158,8 @@ export function InvoiceForm({ mode, customers, defaultDate, initial, invoiceId }
     setFieldErrors({});
 
     const body = {
-      customerId: values.customerId,
+      // Edit mode never sends customerId: an invoice keeps its customer once created.
+      customerId: mode === "create" ? values.customerId : undefined,
       invoiceNumber: values.invoiceNumber.trim() || undefined,
       issueDate: values.issueDate,
       dueDate: values.dueDate,
@@ -223,7 +233,7 @@ export function InvoiceForm({ mode, customers, defaultDate, initial, invoiceId }
           <label htmlFor="customerId" className={labelClass}>
             Customer *
           </label>
-          <select className={inputClass} {...headerProps("customerId")}>
+          <select className={inputClass} disabled={mode === "edit"} {...headerProps("customerId")}>
             <option value="">Select a customer</option>
             {customers.map((customer) => (
               <option key={customer.id} value={customer.id}>

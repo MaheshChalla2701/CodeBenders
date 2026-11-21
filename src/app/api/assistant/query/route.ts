@@ -25,7 +25,10 @@ export async function POST(request: Request) {
     );
   }
   try {
-    return jsonResponse({ success: true, data: await askAssistant(parsed.data.message) });
+    return jsonResponse({
+      success: true,
+      data: await askAssistant(parsed.data.message, parsed.data.history ?? []),
+    });
   } catch (error) {
     return serviceErrorResponse(error);
   }

@@ -31,6 +31,12 @@ function watchForPageFailures(page: Page): string[] {
   return failures;
 }
 
+async function sendAssistantMessage(page: Page, message: string) {
+  const input = page.getByLabel("Message CashPilot");
+  await input.fill(message);
+  await input.press("Enter");
+}
+
 test("complete invoice-to-action journey uses persistent application data", async ({ page, context }) => {
   const failures = watchForPageFailures(page);
   const today = kolkataToday();
@@ -135,9 +141,148 @@ test("complete invoice-to-action journey uses persistent application data", asyn
   await expect(page.getByRole("heading", { name: "Action Center" })).toBeVisible();
 
   await page.goto("/assistant");
-  await expect(page.getByText("Groq is not configured.", { exact: false })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Ask CashPilot" })).toBeDisabled();
+  await expect(page.getByRole("heading", { name: "CashPilot Assistant" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText("This section is not built yet");
+  expect(failures).toEqual([]);
+});
+
+test("assistant keeps invoice follow-up replies in the pending invoice workflow", async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  const today = kolkataToday();
+  const dueDate = addDays(today, 21);
+
+  await page.goto("/assistant");
+  await page
+    .getByLabel("Message CashPilot")
+    .fill("Create an invoice of 5000 for Aurora Brands");
+  await page.getByLabel("Message CashPilot").press("Enter");
+  await expect(page.getByText(/Invoice for Aurora Brands, .*5,000/)).toBeVisible();
+  await expect(page.getByText("default 14-day payment term", { exact: false })).toBeVisible();
+
+  await page.getByLabel("Message CashPilot").fill("no due date");
+  await page.getByLabel("Message CashPilot").press("Enter");
+  await expect(page.getByText("Every CashPilot invoice needs a due date", { exact: false })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText("I can’t create or modify invoices");
+
+  await page.getByLabel("Message CashPilot").fill(`due ${dueDate}`);
+  await page.getByLabel("Message CashPilot").press("Enter");
+  await expect(page.getByText(`Due date updated to ${dueDate}`, { exact: false })).toBeVisible();
+
+  await page.getByLabel("Message CashPilot").fill("confirm");
+  await page.getByLabel("Message CashPilot").press("Enter");
+  await expect(page.getByText(/Saved draft invoice INV-/)).toBeVisible();
+  await page.getByRole("link", { name: "View invoice" }).click();
+  await expect(page.getByText(dueDate, { exact: true })).toBeVisible();
+  expect(pageErrors).toEqual([]);
+});
+
+test("assistant validates, replaces, and cancels pending invoice drafts", async ({ page }) => {
+  const failures = watchForPageFailures(page);
+  const today = kolkataToday();
+  const pastDate = addDays(today, -1);
+
+  await page.goto("/assistant");
+  await sendAssistantMessage(page, "Create an invoice of 5000 for Aurora Brands");
+  await expect(page.getByRole("button", { name: "Confirm and save" })).toBeVisible();
+
+  await sendAssistantMessage(page, "due 2026-02-30");
+  await expect(page.getByText("real date in YYYY-MM-DD format", { exact: false })).toBeVisible();
+
+  await sendAssistantMessage(page, `due ${pastDate}`);
+  await expect(page.getByText("cannot be before the issue date", { exact: false })).toBeVisible();
+
+  await sendAssistantMessage(page, "Create an invoice of 6250.75 for Bluebird Foods");
+  await expect(page.getByText(/Invoice for Bluebird Foods, .*6,250\.75/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm and save" })).toHaveCount(1);
+
+  await sendAssistantMessage(page, "cancel");
+  await expect(page.getByText("Cancelled. Nothing was saved.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm and save" })).toHaveCount(0);
+  expect(failures).toEqual([]);
+});
+
+test("assistant can create a new customer and invoice only after confirmation", async ({ page }) => {
+  const failures = watchForPageFailures(page);
+  const customerName = "Assistant E2E New Customer";
+
+  await page.goto("/assistant");
+  await sendAssistantMessage(page, `Create an invoice of 4321 for ${customerName}`);
+  await expect(page.getByText(`No customer named '${customerName}' exists`, { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create customer and invoice" })).toBeVisible();
+
+  const beforeConfirm = await page.request.get(`/api/customers?search=${encodeURIComponent(customerName)}`);
+  expect(beforeConfirm.ok()).toBe(true);
+  expect((await beforeConfirm.json()).data).toHaveLength(0);
+
+  await page.getByRole("button", { name: "Create customer and invoice" }).click();
+  await expect(page.getByText(/Saved draft invoice INV-/)).toBeVisible();
+  await page.getByRole("link", { name: "View invoice" }).click();
+  await expect(page.getByText(customerName, { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("Draft", { exact: true })).toBeVisible();
+  expect(failures).toEqual([]);
+});
+
+test("assistant asks the user to disambiguate similar customers", async ({ page }) => {
+  const failures = watchForPageFailures(page);
+  for (const name of ["Assistant Alpha Labs", "Assistant Alpha Studio"]) {
+    const response = await page.request.post("/api/customers", { data: { name } });
+    expect(response.status()).toBe(201);
+  }
+
+  await page.goto("/assistant");
+  await sendAssistantMessage(page, "Create an invoice of 2500 for Assistant Alpha");
+  await expect(page.getByText("Which customer did you mean?", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Assistant Alpha Labs" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Assistant Alpha Studio" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Assistant Alpha Labs" }).click();
+  await expect(page.getByText(/Invoice for Assistant Alpha Labs, .*2,500/)).toBeVisible();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByText("Cancelled. Nothing was saved.", { exact: true })).toBeVisible();
+  expect(failures).toEqual([]);
+});
+
+test("assistant handles local conversation, offline AI, input validation, and consent API security", async ({ page }) => {
+  const failures = watchForPageFailures(page);
+
+  const statusResponse = await page.request.get("/api/assistant/status");
+  expect(statusResponse.ok()).toBe(true);
+  expect((await statusResponse.json()).data).toMatchObject({ configured: false, available: false });
+
+  const enabled = await page.request.put("/api/assistant/consent", { data: { consent: true } });
+  expect(enabled.ok()).toBe(true);
+  expect((await enabled.json()).data).toMatchObject({ consented: true, configured: false, available: false });
+
+  const invalid = await page.request.put("/api/assistant/consent", { data: { consent: "yes" } });
+  expect(invalid.status()).toBe(400);
+  expect((await invalid.json()).error.code).toBe("VALIDATION_ERROR");
+
+  const forbidden = await page.request.put("/api/assistant/consent", {
+    data: { consent: false },
+    headers: { Origin: "https://attacker.example" },
+  });
+  expect(forbidden.status()).toBe(403);
+
+  const disabled = await page.request.put("/api/assistant/consent", { data: { consent: false } });
+  expect(disabled.ok()).toBe(true);
+  expect((await disabled.json()).data).toMatchObject({ consented: false, available: false });
+
+  await page.goto("/assistant");
+  await sendAssistantMessage(page, "hi");
+  await expect(page.getByText("Hi! I’m CashPilot.", { exact: false })).toBeVisible();
+
+  await sendAssistantMessage(page, "How much money do customers owe me?");
+  await expect(page.getByText("Online AI answers are not configured yet", { exact: false })).toBeVisible();
+
+  await sendAssistantMessage(page, "Create an invoice for Aurora Brands");
+  await expect(page.getByText("Tell me the amount", { exact: false })).toBeVisible();
+  await sendAssistantMessage(page, "Create an invoice of -500 for Aurora Brands");
+  await expect(page.getByText("more than 0", { exact: false })).toBeVisible();
+  await sendAssistantMessage(page, "Create an invoice of 5000.999 for Aurora Brands");
+  await expect(
+    page.getByText("no more than 2 decimal places", { exact: false }).last(),
+  ).toBeVisible();
   expect(failures).toEqual([]);
 });
 
@@ -163,5 +308,16 @@ test("mobile layout and keyboard entry points remain usable", async ({ page }) =
   await expect(page.getByLabel("Due to")).toBeVisible();
   await page.goto("/bills?status=OVERDUE");
   await expect(page.getByLabel("Status")).toHaveValue("OVERDUE");
+
+  await page.goto("/assistant");
+  await expect(page.getByRole("heading", { name: "CashPilot Assistant" })).toBeVisible();
+  await expect(page.getByLabel("Message CashPilot")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create an invoice draft" })).toBeVisible();
+  const assistantHasHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  );
+  expect(assistantHasHorizontalOverflow).toBe(false);
+  await sendAssistantMessage(page, "hi");
+  await expect(page.getByText("Hi! I’m CashPilot.", { exact: false })).toBeVisible();
   expect(failures).toEqual([]);
 });

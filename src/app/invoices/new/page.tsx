@@ -6,8 +6,16 @@ import { listCustomers } from "@/lib/services/customers";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewInvoicePage() {
+type NewInvoicePageProps = {
+  searchParams: Promise<{ customerId?: string | string[] }>;
+};
+
+export default async function NewInvoicePage({ searchParams }: NewInvoicePageProps) {
+  const { customerId } = await searchParams;
   const customers = await listCustomers();
+  // listCustomers returns non-archived customers only; an unknown or archived id is ignored.
+  const requestedId = Array.isArray(customerId) ? customerId[0] : customerId;
+  const initialCustomerId = customers.some((customer) => customer.id === requestedId) ? requestedId : undefined;
 
   return (
     <AppShell>
@@ -20,6 +28,7 @@ export default async function NewInvoicePage() {
           mode="create"
           customers={customers.map((customer) => ({ id: customer.id, name: customer.name }))}
           defaultDate={todayKolkata()}
+          initialCustomerId={initialCustomerId}
         />
         {customers.length === 0 && (
           <p className="mt-4 text-sm text-gray-600">

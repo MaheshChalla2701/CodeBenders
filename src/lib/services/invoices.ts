@@ -139,13 +139,19 @@ export async function updateDraft(id: string, patch: InvoicePatchInput) {
     await prisma.$transaction(async (tx) => {
       const invoice = await tx.invoice.findUnique({
         where: { id },
-        select: { lifecycle: true, issueDate: true, dueDate: true },
+        select: { lifecycle: true, customerId: true, issueDate: true, dueDate: true },
       });
       if (!invoice) {
         throw notFound("Invoice");
       }
       if (invoice.lifecycle !== "DRAFT") {
         throw new ServiceError("DOMAIN_RULE", "Issued invoices cannot be edited");
+      }
+      if (patch.customerId !== undefined && patch.customerId !== invoice.customerId) {
+        throw new ServiceError(
+          "DOMAIN_RULE",
+          "This invoice belongs to one customer. Create a new invoice for the other customer instead.",
+        );
       }
       if (patch.customerId !== undefined) {
         await assertCustomerUsable(tx, patch.customerId);

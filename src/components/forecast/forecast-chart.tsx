@@ -70,10 +70,10 @@ export function ForecastChart({
     <div role="img" aria-label={`Projected cash balance over ${horizonDays} days`}>
       <ResponsiveContainer width="100%" height={320}>
         <LineChart data={rows} margin={{ top: 16, right: 16, bottom: 8, left: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="date" tickFormatter={formatDayMonth} minTickGap={24} tick={{ fontSize: 12 }} />
-          <YAxis width={110} tickFormatter={formatRupees} tick={{ fontSize: 12 }} />
-          <Tooltip
+          <CartesianGrid vertical={false} strokeDasharray="4 5" stroke="#e8eef1" />
+          <XAxis dataKey="date" tickFormatter={formatDayMonth} minTickGap={24} axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 11 }} />
+          <YAxis width={76} axisLine={false} tickLine={false} tickFormatter={formatRupees} tick={{ fontSize: 12 }} />
+          <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
             labelFormatter={(label) => formatDisplayDate(String(label))}
             formatter={(value) => (typeof value === "number" ? formatRupees(value) : String(value))}
           />
@@ -82,23 +82,22 @@ export function ForecastChart({
             y={0}
             stroke="#dc2626"
             strokeDasharray="4 4"
-            label={{ value: "₹0", position: "insideTopLeft", fill: "#dc2626", fontSize: 12 }}
           />
           <Line
-            type="monotone"
+            type="linear"
             dataKey="projected"
             name={primaryLabel}
-            stroke="#111827"
-            strokeWidth={2}
+            stroke="#0f766e"
+            strokeWidth={2.5} isAnimationActive={false}
             dot={NegativeDot}
           />
           {baselinePoints !== undefined ? (
             <Line
-              type="monotone"
+              type="linear"
               dataKey="baseline"
               name="Baseline"
               stroke="#9ca3af"
-              strokeWidth={2}
+              strokeWidth={2.5} isAnimationActive={false}
               strokeDasharray="6 4"
               dot={false}
             />

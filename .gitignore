@@ -18,3 +18,5 @@ playwright-report/
 prisma/e2e.db*
 *.tsbuildinfo
 .DS_Store
+*.log
+.codebenders/scratch/

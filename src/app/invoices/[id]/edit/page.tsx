@@ -29,10 +29,10 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
   if (invoice.lifecycle !== "DRAFT") {
     return (
       <AppShell>
-        <h1 className="text-2xl font-semibold text-gray-900">{invoice.invoiceNumber}</h1>
-        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-          <p className="font-medium text-gray-900">Issued invoices cannot be edited.</p>
-          <Link href={`/invoices/${invoice.id}`} className="mt-2 inline-block text-sm text-gray-700 underline">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{invoice.invoiceNumber}</h1>
+        <div className="mt-6 cp-panel p-6">
+          <p className="font-medium text-slate-900">Issued invoices cannot be edited.</p>
+          <Link href={`/invoices/${invoice.id}`} className="mt-2 inline-block text-sm text-slate-700 underline">
             Back to invoice
           </Link>
         </div>
@@ -51,8 +51,11 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
 
   return (
     <AppShell>
-      <h1 className="text-2xl font-semibold text-gray-900">Edit draft {invoice.invoiceNumber}</h1>
-      <div className="mt-6 max-w-3xl rounded-lg border border-gray-200 bg-white p-6">
+      <Link href={`/invoices/${invoice.id}`} className="text-sm text-teal-800 hover:underline">← Back to invoice</Link>
+      <p className="cp-eyebrow mt-5">Invoice workspace</p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Edit draft {invoice.invoiceNumber}</h1>
+      <p className="mt-2 text-sm text-slate-500">Review the details before issuing this invoice.</p>
+      <div className="cp-form-card">
         <InvoiceForm
           mode="edit"
           invoiceId={invoice.id}

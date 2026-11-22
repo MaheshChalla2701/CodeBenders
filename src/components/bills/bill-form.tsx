@@ -48,8 +48,8 @@ const RECURRENCE_LABELS: Record<string, string> = {
 };
 
 const inputClass =
-  "mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900";
-const labelClass = "block text-sm font-medium text-gray-800";
+  "mt-1 w-full cp-input";
+const labelClass = "block text-sm font-medium text-slate-800";
 
 function FieldError({ messages }: { messages?: string[] }) {
   if (!messages || messages.length === 0) {
@@ -203,7 +203,7 @@ export function BillForm({ mode, billId, initial }: BillFormProps) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-60"
+        className="cp-button-primary disabled:opacity-60"
       >
         {pending ? "Saving..." : mode === "create" ? "Save bill" : "Save changes"}
       </button>

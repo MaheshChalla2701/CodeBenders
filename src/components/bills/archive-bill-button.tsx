@@ -54,14 +54,14 @@ export function ArchiveBillButton({ billId }: ArchiveBillButtonProps) {
 
   return (
     <div>
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-slate-600">
         Archiving stops future occurrences. Paid history is kept.
       </p>
       <button
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className="mt-3 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+        className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-60"
       >
         {pending ? "Archiving..." : "Archive bill"}
       </button>

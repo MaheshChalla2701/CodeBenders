@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/layout/page-header";
+import { SummaryStrip } from "@/components/layout/summary-strip";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { formatINR } from "@/lib/financial/money";
@@ -14,17 +16,15 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
-        <Link
-          href="/customers/new"
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-        >
-          New customer
-        </Link>
-      </div>
+      <PageHeader eyebrow="Your relationships" title="Customers" description="Keep customer details, balances, and payment history together." action={{ href: "/customers/new", label: "New customer" }} />
 
-      <form method="GET" action="/customers" className="mt-6 flex flex-wrap gap-2">
+      <SummaryStrip label="Customer overview" items={[
+        { label: term ? "Matching customers" : "Customers", value: customers.length, detail: term ? "In this search" : "Active customer relationships", tone: "primary" },
+        { label: "Outstanding", value: formatINR(customers.reduce((sum, customer) => sum + customer.summary.outstandingPaise, 0)), detail: "Across the customers shown" },
+        { label: "Overdue", value: formatINR(customers.reduce((sum, customer) => sum + customer.summary.overdueOutstandingPaise, 0)), detail: "Collections that need attention", tone: "danger" },
+      ]} />
+
+      <form key={term} method="GET" action="/customers" className="cp-filter-bar">
         <label htmlFor="search" className="sr-only">
           Search customers
         </label>
@@ -34,29 +34,30 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           type="search"
           defaultValue={term}
           placeholder="Search by name, company, email or phone"
-          className="w-full max-w-md rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          className="w-full max-w-md cp-input"
         />
         <button
           type="submit"
-          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100"
+          className="cp-button-secondary"
         >
           Search
         </button>
+        {term && <Link href="/customers" className="cp-button-secondary">Clear search</Link>}
       </form>
 
       {customers.length === 0 ? (
-        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-          <p className="text-sm text-gray-600">
+        <div className="mt-6 cp-panel p-6">
+          <p className="text-sm text-slate-600">
             {term
               ? `No customers match "${term}".`
               : "No customers yet. Add your first client to start invoicing."}
           </p>
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50 text-left text-gray-600">
-              <tr>
+        <div className="mt-6 overflow-x-auto cp-panel">
+          <table role="table" className="cp-table divide-y divide-slate-200">
+            <thead className="bg-slate-50 text-left text-slate-600">
+              <tr role="row">
                 <th scope="col" className="px-4 py-3 font-medium">Name</th>
                 <th scope="col" className="px-4 py-3 font-medium">Company</th>
                 <th scope="col" className="px-4 py-3 text-right font-medium">Outstanding</th>
@@ -64,27 +65,27 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
                 <th scope="col" className="px-4 py-3 text-right font-medium">Unpaid invoices</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {customers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <Link href={`/customers/${customer.id}`} className="font-medium text-gray-900 hover:underline">
+                <tr role="row" key={customer.id} className="hover:bg-slate-50">
+                  <td role="cell" data-label="Name" className="px-4 py-3">
+                    <Link href={`/customers/${customer.id}`} className="font-medium text-slate-900 hover:underline">
                       {customer.name}
                     </Link>
                     {customer.archivedAt && (
-                      <span className="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-700">
+                      <span className="ml-2 rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">
                         Archived
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{customer.companyName ?? "—"}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">
+                  <td role="cell" data-label="Company" className="px-4 py-3 text-slate-700">{customer.companyName ?? "—"}</td>
+                  <td role="cell" data-label="Outstanding" className="px-4 py-3 text-right text-slate-900">
                     {formatINR(customer.summary.outstandingPaise)}
                   </td>
-                  <td className="px-4 py-3 text-right text-red-700">
+                  <td role="cell" data-label="Overdue" className="px-4 py-3 text-right text-red-700">
                     {formatINR(customer.summary.overdueOutstandingPaise)}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-700">
+                  <td role="cell" data-label="Unpaid invoices" className="px-4 py-3 text-right text-slate-700">
                     {customer.summary.openInvoiceCount}
                   </td>
                 </tr>

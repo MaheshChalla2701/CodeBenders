@@ -57,8 +57,8 @@ interface ApiResponse {
 }
 
 const inputClass =
-  "mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900";
-const labelClass = "block text-sm font-medium text-gray-800";
+  "mt-1 w-full cp-input";
+const labelClass = "block text-sm font-medium text-slate-800";
 
 let itemKeySeed = 0;
 
@@ -217,9 +217,9 @@ export function InvoiceForm({
 
   if (customers.length === 0 && mode === "create") {
     return (
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-slate-600">
         Add a customer before creating an invoice.{" "}
-        <Link href="/customers/new" className="font-medium text-gray-900 underline">
+        <Link href="/customers/new" className="font-medium text-slate-900 underline">
           New customer
         </Link>
       </p>
@@ -283,13 +283,13 @@ export function InvoiceForm({
       </div>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-gray-800">Line items *</legend>
+        <legend className="text-sm font-medium text-slate-800">Line items *</legend>
         {items.map((item, index) => {
           const n = index + 1;
           return (
-            <div key={item.key} className="grid gap-2 rounded-md border border-gray-200 p-3 sm:grid-cols-12">
-              <div className="sm:col-span-5">
-                <label htmlFor={`item-${item.key}-description`} className="block text-xs font-medium text-gray-700">
+            <div key={item.key} className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 lg:grid-cols-12">
+              <div className="lg:col-span-4">
+                <label htmlFor={`item-${item.key}-description`} className="block text-xs font-medium text-slate-700">
                   Item {n} description
                 </label>
                 <input
@@ -300,8 +300,8 @@ export function InvoiceForm({
                   className={inputClass}
                 />
               </div>
-              <div className="sm:col-span-2">
-                <label htmlFor={`item-${item.key}-quantity`} className="block text-xs font-medium text-gray-700">
+              <div className="lg:col-span-2">
+                <label htmlFor={`item-${item.key}-quantity`} className="block text-xs font-medium text-slate-700">
                   Quantity
                 </label>
                 <input
@@ -315,8 +315,8 @@ export function InvoiceForm({
                   className={inputClass}
                 />
               </div>
-              <div className="sm:col-span-2">
-                <label htmlFor={`item-${item.key}-unitPrice`} className="block text-xs font-medium text-gray-700">
+              <div className="lg:col-span-2">
+                <label htmlFor={`item-${item.key}-unitPrice`} className="block text-xs font-medium text-slate-700">
                   Unit price ₹
                 </label>
                 <input
@@ -330,16 +330,16 @@ export function InvoiceForm({
                   className={inputClass}
                 />
               </div>
-              <div className="flex flex-col justify-end sm:col-span-2">
-                <p className="text-xs font-medium text-gray-700">Line total</p>
-                <p className="mt-1 py-2 text-sm text-gray-900">{formatLine(item.quantity, item.unitPrice)}</p>
+              <div className="flex flex-col justify-end lg:col-span-2">
+                <p className="text-xs font-medium text-slate-700">Line total</p>
+                <p className="mt-1 py-2 text-sm text-slate-900">{formatLine(item.quantity, item.unitPrice)}</p>
               </div>
-              <div className="flex items-end sm:col-span-1">
+              <div className="flex items-end lg:col-span-2">
                 <button
                   type="button"
                   onClick={() => removeItem(item.key)}
                   disabled={items.length <= 1}
-                  className="rounded-md border border-gray-300 bg-white px-2 py-2 text-xs font-medium text-gray-800 hover:bg-gray-100 disabled:opacity-50"
+                  className="cp-button-secondary px-2 disabled:opacity-50"
                 >
                   Remove
                 </button>
@@ -352,11 +352,11 @@ export function InvoiceForm({
           <button
             type="button"
             onClick={addItem}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100"
+            className="cp-button-secondary"
           >
             Add item
           </button>
-          <p className="text-sm font-medium text-gray-900">Invoice total: {formatINR(grandPaise)}</p>
+          <p className="text-sm font-medium text-slate-900">Invoice total: {formatINR(grandPaise)}</p>
         </div>
       </fieldset>
 
@@ -391,11 +391,11 @@ export function InvoiceForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-60"
+          className="cp-button-primary disabled:opacity-60"
         >
           {pending ? "Saving..." : mode === "create" ? "Save draft" : "Save changes"}
         </button>
-        <Link href={mode === "edit" && invoiceId ? `/invoices/${invoiceId}` : "/invoices"} className="text-sm text-gray-700 hover:underline">
+        <Link href={mode === "edit" && invoiceId ? `/invoices/${invoiceId}` : "/invoices"} className="text-sm text-slate-700 hover:underline">
           Cancel
         </Link>
       </div>

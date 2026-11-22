@@ -4,8 +4,103 @@
 
 @layer base {
   body {
-    background: #f7f7f5;
-    color: #1f2328;
+    background: #f5f7f8;
+    color: #0f172a;
     font-family: system-ui, sans-serif;
+  }
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid #0f766e;
+    outline-offset: 3px;
+  }
+  ::selection { background: #ccfbf1; }
+  input, select, textarea { min-width: 0; }
+  button:disabled { cursor: not-allowed; }
+}
+
+@layer components {
+  .cp-panel {
+    @apply min-w-0 rounded-2xl border border-slate-200/80 bg-white;
+    box-shadow: 0 2px 8px -4px rgb(15 23 42 / 0.12);
+  }
+  .cp-eyebrow {
+    @apply text-[10px] font-semibold uppercase tracking-[0.18em] text-teal-700;
+  }
+  .cp-button-primary {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-900 disabled:opacity-50;
+  }
+  .cp-button-secondary {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-teal-300 hover:bg-teal-50 disabled:opacity-50;
+  }
+  .cp-input {
+    @apply min-h-11 max-w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100 disabled:bg-slate-50 disabled:text-slate-500;
+  }
+  .cp-filter-bar {
+    @apply cp-panel mt-6 flex flex-wrap items-end gap-3 p-4;
+  }
+  .cp-filter-bar > div { @apply min-w-0 flex-1 basis-40; }
+  .cp-filter-bar input, .cp-filter-bar select { @apply mt-1 w-full; }
+  .cp-table { @apply relative w-full text-left text-sm; }
+  .cp-table thead { @apply bg-slate-50/80 text-[10px] uppercase tracking-wider text-slate-500; }
+  .cp-table th { @apply whitespace-nowrap px-5 py-4 font-semibold; }
+  .cp-table td { @apply whitespace-nowrap px-5 py-4; }
+  .cp-table tbody tr { @apply transition hover:bg-slate-50/70; }
+  .cp-table td.text-right { @apply tabular-nums; }
+  .cp-table td a { @apply font-medium text-teal-800; }
+  .cp-form-card { @apply cp-panel mt-6 max-w-3xl p-5 sm:p-8; }
+  .cp-workspace h1 { overflow-wrap: anywhere; }
+  .cp-workspace dd { overflow-wrap: anywhere; }
+}
+
+/* Each record retains its table semantics and all fields on small screens. */
+@media (max-width: 639px) {
+  .cp-input, #assistant-question { font-size: 16px; }
+  .cp-filter-bar > div { flex-basis: 100%; }
+}
+
+@media (max-width: 1023px) {
+  .cp-table, .cp-table tbody { display: block; }
+  .cp-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .cp-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+    padding: 16px 20px;
+  }
+  .cp-table td {
+    display: block;
+    padding: 6px 0;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .cp-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .cp-table td:first-child { grid-column: 1 / -1; font-weight: 600; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

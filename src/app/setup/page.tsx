@@ -1,3 +1,5 @@
+import { Wallet } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 import { redirect } from "next/navigation";
 import { BusinessForm } from "@/components/business/business-form";
 import { prisma } from "@/lib/db/client";
@@ -15,9 +17,10 @@ export default async function SetupPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <h1 className="text-2xl font-semibold text-gray-900">Set up your business</h1>
-      <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
+    <main className="mx-auto max-w-3xl px-5 py-10 sm:py-16">
+      <div className="mb-8 flex items-center gap-3 text-xl font-bold tracking-tight"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-800 text-white"><Wallet size={22} aria-hidden="true" /></span>CashPilot<span className="text-teal-700">.</span></div>
+      <PageHeader eyebrow="A clearer view starts here" title="Set up your business" description="Add your business details and opening cash balance to get started. You can update these in Settings later." />
+      <div className="cp-form-card">
         <BusinessForm mode="create" />
       </div>
     </main>

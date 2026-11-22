@@ -30,7 +30,9 @@ vi.mock("@/lib/services/forecast", () => ({
 }));
 
 import {
+  answerAssistant,
   askAssistant,
+  askDirectAssistant,
   getAssistantStatus,
   setAssistantConsent,
 } from "@/lib/services/assistant";
@@ -243,5 +245,46 @@ describe("askAssistant", () => {
       message: "Groq rejected the API key. Check GROQ_API_KEY.",
     });
     expect((error as Error).message).not.toContain("provider detail");
+  });
+
+  it("uses Direct AI without loading or transmitting business records", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(groqResponse("Working capital is current assets minus current liabilities."));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await askDirectAssistant("What is working capital?");
+
+    expect(result.factsUsed).toEqual([]);
+    expect(mocks.getDashboardData).not.toHaveBeenCalled();
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(String(init.body));
+    expect(body.messages.at(-1).content).toBe("User message:\nWhat is working capital?");
+    expect(String(init.body)).not.toContain("INV-0001");
+  });
+
+  it("dispatches record questions to a scoped functional agent", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(groqResponse("Studio rent is due next."));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await answerAssistant("Which bills are due this month?");
+
+    expect(result.agent).toBe("bills");
+    expect(result.factsUsed).toEqual(["Upcoming bills"]);
+    expect(mocks.getDashboardData).toHaveBeenCalledWith(30);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(String(init.body));
+    const prompt = body.messages.at(-1).content as string;
+    expect(prompt).toContain('"selectedAgent":"bills"');
+    expect(prompt).toContain('"upcomingBills"');
+    expect(prompt).not.toContain('"openInvoices"');
+  });
+
+  it("dispatches general questions to Direct AI", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(groqResponse("Cash flow tracks money moving in and out.")));
+
+    const result = await answerAssistant("What does cash flow mean?");
+
+    expect(result.agent).toBe("direct");
+    expect(result.factsUsed).toEqual([]);
+    expect(mocks.getDashboardData).not.toHaveBeenCalled();
   });
 });

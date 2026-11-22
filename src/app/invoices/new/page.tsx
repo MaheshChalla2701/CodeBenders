@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/layout/page-header";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { InvoiceForm } from "@/components/invoices/invoice-form";
@@ -19,11 +20,8 @@ export default async function NewInvoicePage({ searchParams }: NewInvoicePagePro
 
   return (
     <AppShell>
-      <h1 className="text-2xl font-semibold text-gray-900">New invoice</h1>
-      <p className="mt-1 text-sm text-gray-600">
-        Save as a draft first. You can edit a draft until you issue it.
-      </p>
-      <div className="mt-6 max-w-3xl rounded-lg border border-gray-200 bg-white p-6">
+      <PageHeader title="New invoice" eyebrow="Invoice workspace" description="Save as a draft first. You can edit a draft until you issue it." back={{ href: "/invoices", label: "All invoices" }} />
+      <div className="cp-form-card">
         <InvoiceForm
           mode="create"
           customers={customers.map((customer) => ({ id: customer.id, name: customer.name }))}
@@ -31,9 +29,9 @@ export default async function NewInvoicePage({ searchParams }: NewInvoicePagePro
           initialCustomerId={initialCustomerId}
         />
         {customers.length === 0 && (
-          <p className="mt-4 text-sm text-gray-600">
+          <p className="mt-4 text-sm text-slate-600">
             No customers yet.{" "}
-            <Link href="/customers/new" className="font-medium text-gray-900 underline">
+            <Link href="/customers/new" className="font-medium text-slate-900 underline">
               Add a customer
             </Link>{" "}
             before creating an invoice.

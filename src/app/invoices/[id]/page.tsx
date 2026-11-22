@@ -21,7 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_CLASSES: Record<string, string> = {
-  DRAFT: "bg-gray-200 text-gray-800",
+  DRAFT: "bg-slate-200 text-slate-800",
   ISSUED_UNPAID: "bg-blue-100 text-blue-800",
   PARTIALLY_PAID: "bg-amber-100 text-amber-900",
   PAID: "bg-green-100 text-green-800",
@@ -50,79 +50,74 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
   const { id } = await params;
   const invoice = await loadInvoice(id);
   const statusLabel = STATUS_LABELS[invoice.status] ?? invoice.status;
-  const statusClass = STATUS_CLASSES[invoice.status] ?? "bg-gray-200 text-gray-800";
+  const statusClass = STATUS_CLASSES[invoice.status] ?? "bg-slate-200 text-slate-800";
 
   return (
     <AppShell>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold text-gray-900">{invoice.invoiceNumber}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{invoice.invoiceNumber}</h1>
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClass}`}>
               {statusLabel}
             </span>
           </div>
-          <p className="mt-1 text-sm text-gray-700">
+          <p className="mt-1 text-sm text-slate-700">
             Customer:{" "}
-            <Link href={`/customers/${invoice.customer.id}`} className="font-medium text-gray-900 hover:underline">
+            <Link href={`/customers/${invoice.customer.id}`} className="font-medium text-slate-900 hover:underline">
               {invoice.customer.name}
             </Link>
             {invoice.customer.companyName ? ` (${invoice.customer.companyName})` : ""}
           </p>
         </div>
-        <InvoiceActions
-          invoiceId={invoice.id}
-          lifecycle={invoice.lifecycle}
-          outstandingPaise={invoice.outstandingPaise}
-          defaultDate={todayKolkata()}
-        />
+        <Link href="/invoices" className="cp-button-secondary">All invoices</Link>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <section className="rounded-lg border border-gray-200 bg-white p-4">
+      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+        <div className="space-y-6 xl:col-span-2">
+          <section className="cp-panel p-4">
             <dl className="grid gap-4 text-sm sm:grid-cols-3">
               <div>
-                <dt className="text-gray-600">Issue date</dt>
-                <dd className="mt-1 font-medium text-gray-900">{invoice.issueDate}</dd>
+                <dt className="text-slate-600">Issue date</dt>
+                <dd className="mt-1 font-medium text-slate-900">{invoice.issueDate}</dd>
               </div>
               <div>
-                <dt className="text-gray-600">Due date</dt>
-                <dd className="mt-1 font-medium text-gray-900">{invoice.dueDate}</dd>
+                <dt className="text-slate-600">Due date</dt>
+                <dd className="mt-1 font-medium text-slate-900">{invoice.dueDate}</dd>
               </div>
               <div>
-                <dt className="text-gray-600">Expected collection</dt>
-                <dd className="mt-1 font-medium text-gray-900">{invoice.expectedCollectionDate ?? "—"}</dd>
+                <dt className="text-slate-600">Expected collection</dt>
+                <dd className="mt-1 font-medium text-slate-900">{invoice.expectedCollectionDate ?? "—"}</dd>
               </div>
             </dl>
-            {invoice.overdueDays > 0 && (
+            {invoice.overdue && (
               <p className="mt-3 text-sm font-medium text-red-700">
                 {invoice.overdueDays} {invoice.overdueDays === 1 ? "day" : "days"} overdue
               </p>
             )}
           </section>
 
-          <section className="rounded-lg border border-gray-200 bg-white">
-            <h2 className="border-b border-gray-200 px-4 py-3 text-sm font-semibold text-gray-900">Items</h2>
+          <section className="cp-panel">
+            <h2 className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">Items</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50 text-left text-gray-600">
-                  <tr>
+              <table role="table" className="cp-table divide-y divide-slate-200">
+                <thead className="bg-slate-50 text-left text-slate-600">
+                  <tr role="row">
                     <th scope="col" className="px-4 py-3 font-medium">Description</th>
                     <th scope="col" className="px-4 py-3 text-right font-medium">Qty</th>
                     <th scope="col" className="px-4 py-3 text-right font-medium">Unit price</th>
                     <th scope="col" className="px-4 py-3 text-right font-medium">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-100">
                   {invoice.items.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-4 py-3 text-gray-900">{item.description}</td>
-                      <td className="px-4 py-3 text-right text-gray-700">
+                    <tr role="row" key={item.id}>
+                      <td role="cell" data-label="Description" className="px-4 py-3 text-slate-900">{item.description}</td>
+                      <td role="cell" data-label="Qty" className="px-4 py-3 text-right text-slate-700">
                         {(item.quantityMilli / 1000).toLocaleString("en-IN", { maximumFractionDigits: 3 })}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-700">{formatINR(item.unitPricePaise)}</td>
-                      <td className="px-4 py-3 text-right text-gray-900">{formatINR(item.lineTotalPaise)}</td>
+                      <td role="cell" data-label="Unit price" className="px-4 py-3 text-right text-slate-700">{formatINR(item.unitPricePaise)}</td>
+                      <td role="cell" data-label="Amount" className="px-4 py-3 text-right text-slate-900">{formatINR(item.lineTotalPaise)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -130,30 +125,30 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
             </div>
           </section>
 
-          <section className="rounded-lg border border-gray-200 bg-white">
-            <h2 className="border-b border-gray-200 px-4 py-3 text-sm font-semibold text-gray-900">Payments</h2>
+          <section className="cp-panel">
+            <h2 className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">Payments</h2>
             {invoice.payments.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-gray-600">No payments recorded yet.</p>
+              <p className="px-4 py-3 text-sm text-slate-600">No payments recorded yet.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-gray-50 text-left text-gray-600">
-                    <tr>
+                <table role="table" className="cp-table divide-y divide-slate-200">
+                  <thead className="bg-slate-50 text-left text-slate-600">
+                    <tr role="row">
                       <th scope="col" className="px-4 py-3 font-medium">Date</th>
                       <th scope="col" className="px-4 py-3 font-medium">Method</th>
                       <th scope="col" className="px-4 py-3 font-medium">Reference</th>
                       <th scope="col" className="px-4 py-3 text-right font-medium">Amount</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-slate-100">
                     {invoice.payments.map((payment) => (
-                      <tr key={payment.id}>
-                        <td className="px-4 py-3 text-gray-700">{payment.paymentDate}</td>
-                        <td className="px-4 py-3 text-gray-700">
+                      <tr role="row" key={payment.id}>
+                        <td role="cell" data-label="Date" className="px-4 py-3 text-slate-700">{payment.paymentDate}</td>
+                        <td role="cell" data-label="Method" className="px-4 py-3 text-slate-700">
                           {METHOD_LABELS[payment.method] ?? payment.method}
                         </td>
-                        <td className="px-4 py-3 text-gray-700">{payment.referenceNumber ?? "—"}</td>
-                        <td className="px-4 py-3 text-right text-gray-900">{formatINR(payment.amountPaise)}</td>
+                        <td role="cell" data-label="Reference" className="px-4 py-3 text-slate-700">{payment.referenceNumber ?? "—"}</td>
+                        <td role="cell" data-label="Amount" className="px-4 py-3 text-right text-slate-900">{formatINR(payment.amountPaise)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -163,17 +158,17 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
           </section>
 
           {(invoice.notes || invoice.paymentInstructions) && (
-            <section className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 text-sm">
+            <section className="space-y-4 cp-panel p-4 text-sm">
               {invoice.notes && (
                 <div>
-                  <h2 className="font-semibold text-gray-900">Notes</h2>
-                  <p className="mt-1 whitespace-pre-line text-gray-700">{invoice.notes}</p>
+                  <h2 className="font-semibold text-slate-900">Notes</h2>
+                  <p className="mt-1 whitespace-pre-line text-slate-700">{invoice.notes}</p>
                 </div>
               )}
               {invoice.paymentInstructions && (
                 <div>
-                  <h2 className="font-semibold text-gray-900">Payment instructions</h2>
-                  <p className="mt-1 whitespace-pre-line text-gray-700">{invoice.paymentInstructions}</p>
+                  <h2 className="font-semibold text-slate-900">Payment instructions</h2>
+                  <p className="mt-1 whitespace-pre-line text-slate-700">{invoice.paymentInstructions}</p>
                 </div>
               )}
             </section>
@@ -181,20 +176,22 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
         </div>
 
         <aside className="space-y-4">
-          <section className="rounded-lg border border-gray-200 bg-white p-4">
-            <h2 className="text-sm font-semibold text-gray-900">Totals</h2>
+          <section className="cp-panel p-5">
+            <p className="cp-eyebrow">Invoice balance</p>
+            <p className="mb-5 mt-3 text-3xl font-semibold tracking-tight text-teal-900">{formatINR(invoice.outstandingPaise)}</p>
+            <h2 className="text-sm font-semibold text-slate-900">Totals</h2>
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between">
-                <dt className="text-gray-600">Total</dt>
-                <dd className="font-medium text-gray-900">{formatINR(invoice.totalPaise)}</dd>
+                <dt className="text-slate-600">Total</dt>
+                <dd className="font-medium text-slate-900">{formatINR(invoice.totalPaise)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-600">Received</dt>
-                <dd className="font-medium text-gray-900">{formatINR(invoice.paidPaise)}</dd>
+                <dt className="text-slate-600">Received</dt>
+                <dd className="font-medium text-slate-900">{formatINR(invoice.paidPaise)}</dd>
               </div>
-              <div className="flex justify-between border-t border-gray-200 pt-2">
-                <dt className="text-gray-600">Outstanding</dt>
-                <dd className="font-semibold text-gray-900">{formatINR(invoice.outstandingPaise)}</dd>
+              <div className="flex justify-between border-t border-slate-200 pt-2">
+                <dt className="text-slate-600">Outstanding</dt>
+                <dd className="font-semibold text-slate-900">{formatINR(invoice.outstandingPaise)}</dd>
               </div>
             </dl>
           </section>
@@ -205,6 +202,12 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
               minimumDate={todayKolkata()}
             />
           )}
+          <InvoiceActions
+          invoiceId={invoice.id}
+          lifecycle={invoice.lifecycle}
+          outstandingPaise={invoice.outstandingPaise}
+          defaultDate={todayKolkata()}
+        />
         </aside>
       </div>
     </AppShell>

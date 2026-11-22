@@ -10,7 +10,7 @@ export default async function AssistantPage() {
   if (!status.businessExists) redirect("/setup");
   return (
     <AppShell>
-      <div className="h-[calc(100dvh-10rem)] min-h-[560px] md:h-[calc(100dvh-3rem)]">
+      <div className="h-[calc(100dvh-13rem)] min-h-[620px] md:h-[calc(100dvh-3rem)] lg:h-[calc(100dvh-4rem)]">
         <AssistantPanel initialStatus={status} />
       </div>
     </AppShell>

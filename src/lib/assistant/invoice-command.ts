@@ -30,12 +30,26 @@ const CUSTOMER_SPLIT_RE = /\s(?:in|for|to)\s+/i;
 const DUE_DATE_CLAUSE_RE =
   /\b(?:due(?:\s+date)?(?:\s+(?:is|on))?|with\s+(?:a\s+)?due\s+date)\s*:?\s*(\d{4}-\d{2}-\d{2})\b/i;
 
+const INVOICE_KEYWORD_RE = /\binvoice\b/i;
+const CREATE_INTENT_RE = /\b(?:add|create|draft|generate|make|new|prepare)\b/i;
+
 // ASCII punctuation (ranges: ! to /, : to @, [ to backtick, { to ~).
 const PUNCT_RE = /[!-\/:-@\[-`{-~]/g;
 
+/**
+ * Identifies commands that intend to create an invoice. Financial questions can mention
+ * invoices, bills, amounts, or forecast horizons without being creation commands.
+ */
+export function isInvoiceCommandText(text: string): boolean {
+  const trimmed = text.trim();
+  return (
+    INVOICE_KEYWORD_RE.test(trimmed) &&
+    (CREATE_INTENT_RE.test(trimmed) || /^invoice\b/i.test(trimmed))
+  );
+}
+
 export function parseInvoiceCommand(text: string): ParsedInvoiceCommand {
-  const lower = text.toLowerCase();
-  if (!lower.includes("invoice") && !lower.includes("bill")) {
+  if (!isInvoiceCommandText(text)) {
     return { error: "I can create invoices. Try: add invoice of 5000 in ABC" };
   }
 
@@ -43,7 +57,7 @@ export function parseInvoiceCommand(text: string): ParsedInvoiceCommand {
   // or truncate a value that has more precision than paise can represent.
   const amountText = text.replace(DUE_DATE_CLAUSE_RE, " ");
   if (
-    /(?:rs\.?\s*|â‚¹\s*)?-\s*\d/i.test(amountText) ||
+    /(?:rs\.?\s*|₹\s*)?-\s*\d/i.test(amountText) ||
     /\d[\d,]*\.\d{3,}/.test(amountText)
   ) {
     return { error: "The amount must be more than 0 and use no more than 2 decimal places" };
@@ -73,8 +87,8 @@ export function parseInvoiceCommand(text: string): ParsedInvoiceCommand {
   if (split) {
     raw = afterAmount.slice(split.index + split[0].length);
   } else {
-    // Fallback: words after the "invoice" (or "bill") keyword, with the amount removed.
-    const keyword = /invoice|bill/i.exec(text);
+    // Fallback: words after the invoice keyword, with the amount removed.
+    const keyword = /invoice/i.exec(text);
     raw = keyword ? text.slice(keyword.index + keyword[0].length).replace(AMOUNT_RE, " ") : "";
   }
 

@@ -43,8 +43,8 @@ const EMPTY_VALUES: FormValues = {
 };
 
 const inputClass =
-  "mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900";
-const labelClass = "block text-sm font-medium text-gray-800";
+  "mt-1 w-full cp-input";
+const labelClass = "block text-sm font-medium text-slate-800";
 
 function FieldError({ messages }: { messages?: string[] }) {
   if (!messages || messages.length === 0) {
@@ -119,7 +119,7 @@ export function CustomerForm({ mode, customerId, initial }: CustomerFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="grid gap-5 sm:grid-cols-2">
       <div>
         <label htmlFor="name" className={labelClass}>
           Customer name *
@@ -152,7 +152,7 @@ export function CustomerForm({ mode, customerId, initial }: CustomerFormProps) {
         <FieldError messages={fieldErrors.phone} />
       </div>
 
-      <div>
+      <div className="sm:col-span-2">
         <label htmlFor="address" className={labelClass}>
           Address
         </label>
@@ -160,7 +160,7 @@ export function CustomerForm({ mode, customerId, initial }: CustomerFormProps) {
         <FieldError messages={fieldErrors.address} />
       </div>
 
-      <div>
+      <div className="sm:col-span-2">
         <label htmlFor="notes" className={labelClass}>
           Notes
         </label>
@@ -169,7 +169,7 @@ export function CustomerForm({ mode, customerId, initial }: CustomerFormProps) {
       </div>
 
       {formError && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="sm:col-span-2 text-sm text-red-600">
           {formError}
         </p>
       )}
@@ -177,7 +177,7 @@ export function CustomerForm({ mode, customerId, initial }: CustomerFormProps) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-60"
+        className="cp-button-primary disabled:opacity-60"
       >
         {pending ? "Saving..." : mode === "create" ? "Create customer" : "Save changes"}
       </button>

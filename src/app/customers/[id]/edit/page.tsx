@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/layout/page-header";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
@@ -20,11 +21,11 @@ export default async function EditCustomerPage({ params }: EditCustomerPageProps
 
   return (
     <AppShell>
-      <Link href={`/customers/${customer.id}`} className="text-sm text-gray-600 hover:underline">
+      <Link href={`/customers/${customer.id}`} className="text-sm text-slate-600 hover:underline">
         ← Back to {customer.name}
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold text-gray-900">Edit customer</h1>
-      <div className="mt-6 max-w-2xl rounded-lg border border-gray-200 bg-white p-6">
+      <PageHeader title="Edit customer" eyebrow="Customer directory" description="Keep contact and billing details up to date." />
+      <div className="cp-form-card">
         <CustomerForm
           mode="edit"
           customerId={customer.id}

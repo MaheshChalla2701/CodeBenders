@@ -44,13 +44,13 @@ export function ExpectedCollectionForm({
   }
 
   return (
-    <section className="rounded-lg border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-900">Collection expectation</h2>
-      <p className="mt-1 text-xs text-gray-600">
+    <section className="cp-panel p-4">
+      <h2 className="text-sm font-semibold text-slate-900">Collection expectation</h2>
+      <p className="mt-1 text-xs text-slate-600">
         Used only for forecasting. This does not change the invoice due date or balance.
       </p>
       <form onSubmit={submit} className="mt-3 space-y-3">
-        <label htmlFor="expected-collection-date" className="block text-sm font-medium text-gray-800">
+        <label htmlFor="expected-collection-date" className="block text-sm font-medium text-slate-800">
           Expected collection date
         </label>
         <input
@@ -59,13 +59,13 @@ export function ExpectedCollectionForm({
           min={minimumDate}
           value={date}
           onChange={(event) => setDate(event.target.value)}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          className="w-full cp-input"
         />
         <div className="flex flex-wrap gap-2">
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-60"
+            className="cp-button-primary disabled:opacity-60"
           >
             {pending ? "Saving..." : "Save expectation"}
           </button>
@@ -74,7 +74,7 @@ export function ExpectedCollectionForm({
               type="button"
               disabled={pending}
               onClick={() => setDate("")}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100 disabled:opacity-60"
+              className="cp-button-secondary disabled:opacity-60"
             >
               Clear date
             </button>

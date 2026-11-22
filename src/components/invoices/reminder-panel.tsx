@@ -64,10 +64,10 @@ export function ReminderPanel({ invoiceId, outstandingPaise }: ReminderPanelProp
   }
 
   return (
-    <section id="payment-reminder" className="scroll-mt-6 rounded-lg border border-gray-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-gray-900">Payment reminder</h2>
+    <section id="payment-reminder" className="scroll-mt-6 cp-panel p-4">
+      <h2 className="text-sm font-semibold text-slate-900">Payment reminder</h2>
 
-      {!loaded && <p className="mt-2 text-sm text-gray-600">Loading reminder...</p>}
+      {!loaded && <p className="mt-2 text-sm text-slate-600">Loading reminder...</p>}
 
       {loaded && loadError && (
         <p role="alert" className="mt-2 text-sm text-red-600">
@@ -76,12 +76,12 @@ export function ReminderPanel({ invoiceId, outstandingPaise }: ReminderPanelProp
       )}
 
       {loaded && !loadError && !hasText && (
-        <p className="mt-2 text-sm text-gray-600">Nothing is outstanding on this invoice.</p>
+        <p className="mt-2 text-sm text-slate-600">Nothing is outstanding on this invoice.</p>
       )}
 
       {loaded && !loadError && hasText && (
         <div className="mt-2 space-y-3">
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-slate-600">
             This is a draft you can copy. CashPilot does not send it.
           </p>
           <label htmlFor="reminder-text" className="sr-only">
@@ -92,18 +92,18 @@ export function ReminderPanel({ invoiceId, outstandingPaise }: ReminderPanelProp
             rows={6}
             value={text}
             onChange={(event) => setText(event.target.value)}
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            className="w-full cp-input"
           />
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={handleCopy}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100"
+              className="cp-button-secondary"
             >
               Copy
             </button>
             {copyMessage && (
-              <p role="status" className="text-sm text-gray-700">
+              <p role="status" className="text-sm text-slate-700">
                 {copyMessage}
               </p>
             )}

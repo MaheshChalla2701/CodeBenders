@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/layout/page-header";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { ForecastChart } from "@/components/forecast/forecast-chart";
@@ -31,16 +32,16 @@ function parseHorizon(raw: string | string[] | undefined): ForecastHorizon {
 
 function SummaryCard({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <p className="text-sm font-medium text-gray-600">{label}</p>
-      <p className="mt-1 text-xl font-semibold text-gray-900">{value}</p>
-      {detail ? <p className="mt-1 text-sm text-gray-600">{detail}</p> : null}
+    <div className="cp-panel p-5">
+      <p className="text-sm font-medium text-slate-600">{label}</p>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">{value}</p>
+      {detail ? <p className="mt-1 text-sm text-slate-600">{detail}</p> : null}
     </div>
   );
 }
 
 function EmptyState({ children }: { children: string }) {
-  return <p className="px-4 py-6 text-sm text-gray-600">{children}</p>;
+  return <p className="px-4 py-6 text-sm text-slate-600">{children}</p>;
 }
 
 export default async function ForecastPage({ searchParams }: PageProps) {
@@ -64,9 +65,9 @@ export default async function ForecastPage({ searchParams }: PageProps) {
 
   return (
     <AppShell>
-      <h1 className="text-2xl font-semibold text-gray-900">Cash Forecast</h1>
+      <PageHeader title="Cash Forecast" eyebrow="See what comes next" description="Understand your cash outlook and explore the effect of late payments." />
 
-      <nav aria-label="Forecast horizon" className="mt-4 flex gap-2">
+      <nav aria-label="Forecast horizon" className="mt-6 inline-flex flex-wrap gap-1 rounded-2xl border border-slate-200 bg-white p-1.5">
         {FORECAST_HORIZONS.map((days) => {
           const active = days === horizon;
           return (
@@ -74,10 +75,10 @@ export default async function ForecastPage({ searchParams }: PageProps) {
               key={days}
               href={`?horizon=${days}`}
               aria-current={active ? "page" : undefined}
-              className={`rounded-md border px-3 py-2 text-sm font-medium ${
+              className={`rounded-xl border px-4 py-2 text-sm font-medium ${
                 active
-                  ? "border-gray-900 bg-gray-900 text-white"
-                  : "border-gray-300 bg-white text-gray-800 hover:bg-gray-100"
+                  ? "border-teal-800 bg-teal-800 text-white"
+                  : "border-transparent bg-white text-slate-600 hover:bg-slate-50"
               }`}
             >
               {days} days
@@ -86,7 +87,7 @@ export default async function ForecastPage({ searchParams }: PageProps) {
         })}
       </nav>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <SummaryCard label="Recorded cash today" value={formatINR(forecast.recordedCashPaise)} />
         <SummaryCard
           label={`Projected cash at day ${horizon}`}
@@ -113,23 +114,24 @@ export default async function ForecastPage({ searchParams }: PageProps) {
         />
       </section>
 
-      <p className="mt-4 text-sm text-gray-800">{shortfallSummary}</p>
+      <p className={`mt-5 rounded-xl border p-4 text-sm leading-6 ${forecast.firstShortfallDate ? "border-rose-100 bg-rose-50 text-rose-800" : "border-teal-100 bg-teal-50 text-teal-900"}`}>{shortfallSummary}</p>
 
-      <section className="mt-6 rounded-lg border border-gray-200 bg-white p-4">
+      <section className="mt-6 cp-panel p-5 sm:p-6">
+        <h2 className="mb-5 text-base font-semibold text-slate-900">Cash outlook</h2>
         <ForecastChart points={forecast.points} horizonDays={horizon} />
       </section>
 
       <section className="mt-6" aria-labelledby="incoming-heading">
-        <h2 id="incoming-heading" className="text-lg font-semibold text-gray-900">
+        <h2 id="incoming-heading" className="text-lg font-semibold text-slate-900">
           Expected money in
         </h2>
-        <div className="mt-2 overflow-x-auto rounded-lg border border-gray-200 bg-white">
+        <div className="mt-2 overflow-x-auto cp-panel">
           {forecast.incomingEvents.length === 0 ? (
             <EmptyState>No invoice payments are expected in this window.</EmptyState>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50 text-left text-gray-700">
-                <tr>
+            <table role="table" className="cp-table divide-y divide-slate-200">
+              <thead className="bg-slate-50 text-left text-slate-700">
+                <tr role="row">
                   <th scope="col" className="px-4 py-2 font-medium">Date</th>
                   <th scope="col" className="px-4 py-2 font-medium">Customer</th>
                   <th scope="col" className="px-4 py-2 font-medium">Invoice</th>
@@ -137,14 +139,14 @@ export default async function ForecastPage({ searchParams }: PageProps) {
                   <th scope="col" className="px-4 py-2 font-medium">Basis</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {forecast.incomingEvents.map((event) => (
-                  <tr key={`${event.invoiceId}|${event.date}|${event.basis}`}>
-                    <td className="px-4 py-2 text-gray-900">{formatDisplayDate(event.date)}</td>
-                    <td className="px-4 py-2 text-gray-900">{event.customerName}</td>
-                    <td className="px-4 py-2 text-gray-900">{event.invoiceNumber}</td>
-                    <td className="px-4 py-2 text-right text-gray-900">{formatINR(event.amountPaise)}</td>
-                    <td className="px-4 py-2 text-gray-700">{BASIS_LABELS[event.basis]}</td>
+                  <tr role="row" key={`${event.invoiceId}|${event.date}|${event.basis}`}>
+                    <td role="cell" data-label="Date" className="px-4 py-2 text-slate-900">{formatDisplayDate(event.date)}</td>
+                    <td role="cell" data-label="Customer" className="px-4 py-2 text-slate-900">{event.customerName}</td>
+                    <td role="cell" data-label="Invoice" className="px-4 py-2 text-slate-900">{event.invoiceNumber}</td>
+                    <td role="cell" data-label="Amount" className="px-4 py-2 text-right text-slate-900">{formatINR(event.amountPaise)}</td>
+                    <td role="cell" data-label="Basis" className="px-4 py-2 text-slate-700">{BASIS_LABELS[event.basis]}</td>
                   </tr>
                 ))}
               </tbody>
@@ -154,27 +156,27 @@ export default async function ForecastPage({ searchParams }: PageProps) {
       </section>
 
       <section className="mt-6" aria-labelledby="outgoing-heading">
-        <h2 id="outgoing-heading" className="text-lg font-semibold text-gray-900">
+        <h2 id="outgoing-heading" className="text-lg font-semibold text-slate-900">
           Expected bill payments
         </h2>
-        <div className="mt-2 overflow-x-auto rounded-lg border border-gray-200 bg-white">
+        <div className="mt-2 overflow-x-auto cp-panel">
           {forecast.outgoingEvents.length === 0 ? (
             <EmptyState>No bill payments are due in this window.</EmptyState>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50 text-left text-gray-700">
-                <tr>
+            <table role="table" className="cp-table divide-y divide-slate-200">
+              <thead className="bg-slate-50 text-left text-slate-700">
+                <tr role="row">
                   <th scope="col" className="px-4 py-2 font-medium">Date</th>
                   <th scope="col" className="px-4 py-2 font-medium">Bill</th>
                   <th scope="col" className="px-4 py-2 text-right font-medium">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {forecast.outgoingEvents.map((event) => (
-                  <tr key={`${event.billId}|${event.date}`}>
-                    <td className="px-4 py-2 text-gray-900">{formatDisplayDate(event.date)}</td>
-                    <td className="px-4 py-2 text-gray-900">{event.title}</td>
-                    <td className="px-4 py-2 text-right text-gray-900">{formatINR(event.amountPaise)}</td>
+                  <tr role="row" key={`${event.billId}|${event.date}`}>
+                    <td role="cell" data-label="Date" className="px-4 py-2 text-slate-900">{formatDisplayDate(event.date)}</td>
+                    <td role="cell" data-label="Bill" className="px-4 py-2 text-slate-900">{event.title}</td>
+                    <td role="cell" data-label="Amount" className="px-4 py-2 text-right text-slate-900">{formatINR(event.amountPaise)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -184,26 +186,26 @@ export default async function ForecastPage({ searchParams }: PageProps) {
       </section>
 
       <section className="mt-6" aria-labelledby="uncertain-heading">
-        <h2 id="uncertain-heading" className="text-lg font-semibold text-gray-900">
+        <h2 id="uncertain-heading" className="text-lg font-semibold text-slate-900">
           Invoices without a dated collection
         </h2>
-        <div className="mt-2 rounded-lg border border-gray-200 bg-white">
+        <div className="mt-2 cp-panel">
           {forecast.uncertainInvoices.length === 0 ? (
             <EmptyState>Every outstanding invoice has a dated collection estimate.</EmptyState>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-slate-100">
               {forecast.uncertainInvoices.map((item) => (
                 <li key={item.invoiceId} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-slate-900">
                       {item.invoiceNumber} · {item.customerName}
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-slate-600">
                       {formatINR(item.outstandingPaise)} outstanding. Overdue — no expected date. Set one on the
                       invoice to include it.
                     </p>
                   </div>
-                  <Link href={`/invoices/${item.invoiceId}`} className="text-sm font-medium text-gray-900 underline">
+                  <Link href={`/invoices/${item.invoiceId}`} className="text-sm font-medium text-slate-900 underline">
                     Open invoice
                   </Link>
                 </li>
@@ -214,28 +216,28 @@ export default async function ForecastPage({ searchParams }: PageProps) {
       </section>
 
       <section className="mt-6" aria-labelledby="overdue-bills-heading">
-        <h2 id="overdue-bills-heading" className="text-lg font-semibold text-gray-900">
+        <h2 id="overdue-bills-heading" className="text-lg font-semibold text-slate-900">
           Overdue bills
         </h2>
-        <div className="mt-2 rounded-lg border border-gray-200 bg-white">
+        <div className="mt-2 cp-panel">
           {forecast.overdueBills.length === 0 ? (
             <EmptyState>No bills are overdue.</EmptyState>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-slate-100">
               {forecast.overdueBills.map((bill) => (
                 <li
                   key={`${bill.billId}|${bill.dueDate}`}
                   className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
                 >
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-slate-900">
                       {bill.title} · due {formatDisplayDate(bill.dueDate)}
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-slate-600">
                       {formatINR(bill.amountPaise)}. Past due, settlement unknown.
                     </p>
                   </div>
-                  <Link href="/bills" className="text-sm font-medium text-gray-900 underline">
+                  <Link href="/bills" className="text-sm font-medium text-slate-900 underline">
                     Open bills
                   </Link>
                 </li>
@@ -246,10 +248,10 @@ export default async function ForecastPage({ searchParams }: PageProps) {
       </section>
 
       <section className="mt-6" aria-labelledby="simulator-heading">
-        <h2 id="simulator-heading" className="text-lg font-semibold text-gray-900">
+        <h2 id="simulator-heading" className="text-lg font-semibold text-slate-900">
           What if an invoice is paid late?
         </h2>
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm text-slate-600">
           Choose an issued invoice and a delay to compare the projection. Nothing is saved.
         </p>
         <div className="mt-4">
@@ -257,11 +259,11 @@ export default async function ForecastPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <section className="mt-6 rounded-lg border border-gray-200 bg-white p-4" aria-labelledby="assumptions-heading">
-        <h2 id="assumptions-heading" className="text-lg font-semibold text-gray-900">
+      <section className="mt-6 cp-panel p-4" aria-labelledby="assumptions-heading">
+        <h2 id="assumptions-heading" className="text-lg font-semibold text-slate-900">
           Assumptions
         </h2>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
           {forecast.assumptions.map((assumption) => (
             <li key={assumption}>{assumption}</li>
           ))}

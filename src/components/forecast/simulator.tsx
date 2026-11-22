@@ -36,14 +36,14 @@ interface SimulateResponse {
 const DELAY_PRESETS = [7, 15, 30] as const;
 
 const inputClass =
-  "mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900";
-const labelClass = "block text-sm font-medium text-gray-800";
+  "mt-1 w-full cp-input";
+const labelClass = "block text-sm font-medium text-slate-800";
 
 function buttonClass(active: boolean): string {
-  return `rounded-md border px-3 py-2 text-sm font-medium ${
+  return `min-h-11 rounded-xl border px-4 py-2 text-sm font-medium ${
     active
-      ? "border-gray-900 bg-gray-900 text-white"
-      : "border-gray-300 bg-white text-gray-800 hover:bg-gray-100"
+      ? "border-teal-800 bg-teal-800 text-white"
+      : "border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
   }`;
 }
 
@@ -134,7 +134,7 @@ export function Simulator({ invoices, horizonDays }: SimulatorProps) {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
+      <form onSubmit={handleSubmit} className="space-y-4 cp-panel p-4">
         <div>
           <label htmlFor="simulate-invoice" className={labelClass}>
             Invoice
@@ -159,7 +159,7 @@ export function Simulator({ invoices, horizonDays }: SimulatorProps) {
             ))}
           </select>
           {invoices.length === 0 ? (
-            <p className="mt-1 text-sm text-gray-600">No issued invoices have money outstanding.</p>
+            <p className="mt-1 text-sm text-slate-600">No issued invoices have money outstanding.</p>
           ) : null}
         </div>
 
@@ -178,7 +178,7 @@ export function Simulator({ invoices, horizonDays }: SimulatorProps) {
               </button>
             ))}
             <div>
-              <label htmlFor="custom-delay" className="block text-xs font-medium text-gray-700">
+              <label htmlFor="custom-delay" className="block text-xs font-medium text-slate-700">
                 Custom days (1–365)
               </label>
               <input
@@ -193,7 +193,7 @@ export function Simulator({ invoices, horizonDays }: SimulatorProps) {
                 onChange={handleCustomChange}
                 aria-invalid={customInvalid ? true : undefined}
                 aria-describedby={customInvalid ? "custom-delay-error" : undefined}
-                className="mt-1 w-28 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                className="mt-1 w-28 cp-input"
               />
             </div>
           </div>
@@ -208,20 +208,20 @@ export function Simulator({ invoices, horizonDays }: SimulatorProps) {
           <button
             type="submit"
             disabled={pending || !invoiceId || delayDays === null}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="cp-button-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? "Running…" : "Run simulation"}
           </button>
           <button
             type="button"
             onClick={handleReset}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100"
+            className="cp-button-secondary"
           >
             Reset
           </button>
         </div>
 
-        <p className="text-sm text-gray-600">This simulation does not change any invoice or payment.</p>
+        <p className="text-sm text-slate-600">This simulation does not change any invoice or payment.</p>
       </form>
 
       {error ? (
@@ -257,38 +257,38 @@ function SimulationOutcome({
     : `Without the delay, cash does not go below zero within ${windowLabel}.`;
 
   return (
-    <section aria-labelledby="simulation-result" className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
-      <h2 id="simulation-result" className="text-lg font-semibold text-gray-900">
+    <section aria-labelledby="simulation-result" className="space-y-4 cp-panel p-4">
+      <h2 id="simulation-result" className="text-lg font-semibold text-slate-900">
         Simulation result{invoiceLabel ? `: ${invoiceLabel}` : ""}
       </h2>
 
-      <p className="text-sm text-gray-800">
+      <p className="text-sm text-slate-800">
         {shortfallSentence} {baselineSentence}
       </p>
 
       <dl className="grid gap-4 sm:grid-cols-2">
         <div>
-          <dt className="text-sm font-medium text-gray-700">Expected collection date</dt>
-          <dd className="mt-1 text-sm text-gray-900">
+          <dt className="text-sm font-medium text-slate-700">Expected collection date</dt>
+          <dd className="mt-1 text-sm text-slate-900">
             {displayOrPlaceholder(result.originalDate, "Outside this window")} →{" "}
             {displayOrPlaceholder(result.scenarioDate, "Outside this window")}
           </dd>
         </div>
         <div>
-          <dt className="text-sm font-medium text-gray-700">Difference at day {horizonDays}</dt>
-          <dd className="mt-1 text-sm text-gray-900">{signedINR(result.differenceAtHorizonPaise)}</dd>
+          <dt className="text-sm font-medium text-slate-700">Difference at day {horizonDays}</dt>
+          <dd className="mt-1 text-sm text-slate-900">{signedINR(result.differenceAtHorizonPaise)}</dd>
         </div>
         <div>
-          <dt className="text-sm font-medium text-gray-700">Lowest projected cash</dt>
-          <dd className="mt-1 text-sm text-gray-900">
+          <dt className="text-sm font-medium text-slate-700">Lowest projected cash</dt>
+          <dd className="mt-1 text-sm text-slate-900">
             Before: {formatINR(baseline.minimumCashPaise)} on {formatDisplayDate(baseline.minimumCashDate)}
             <br />
             After: {formatINR(scenario.minimumCashPaise)} on {formatDisplayDate(scenario.minimumCashDate)}
           </dd>
         </div>
         <div>
-          <dt className="text-sm font-medium text-gray-700">First shortfall</dt>
-          <dd className="mt-1 text-sm text-gray-900">
+          <dt className="text-sm font-medium text-slate-700">First shortfall</dt>
+          <dd className="mt-1 text-sm text-slate-900">
             Before: {displayOrPlaceholder(baseline.firstShortfallDate, "None")}
             <br />
             After: {displayOrPlaceholder(scenario.firstShortfallDate, "None")}

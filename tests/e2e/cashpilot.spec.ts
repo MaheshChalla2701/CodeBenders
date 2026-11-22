@@ -246,6 +246,21 @@ test("assistant asks the user to disambiguate similar customers", async ({ page 
 test("assistant handles local conversation, offline AI, input validation, and consent API security", async ({ page }) => {
   const failures = watchForPageFailures(page);
 
+  for (const [message, agent] of [
+    ["Will I have enough cash for bills in the next 30 days?", "forecast"],
+    ["Which invoices are overdue?", "receivables"],
+    ["Which bills are due this month?", "bills"],
+    ["Draft a reminder for invoice INV-0017", "reminder"],
+    ["What does cash flow mean?", "direct"],
+    ["Create an invoice of 5000 for Aurora Brands", "invoice"],
+  ] as const) {
+    const routeResponse = await page.request.post("/api/assistant/route", {
+      data: { message },
+    });
+    expect(routeResponse.ok()).toBe(true);
+    expect((await routeResponse.json()).data.agent).toBe(agent);
+  }
+
   const statusResponse = await page.request.get("/api/assistant/status");
   expect(statusResponse.ok()).toBe(true);
   expect((await statusResponse.json()).data).toMatchObject({ configured: false, available: false });
@@ -274,6 +289,12 @@ test("assistant handles local conversation, offline AI, input validation, and co
 
   await sendAssistantMessage(page, "How much money do customers owe me?");
   await expect(page.getByText("Online AI answers are not configured yet", { exact: false })).toBeVisible();
+
+  await sendAssistantMessage(page, "Will I have enough cash for bills in the next 30 days?");
+  await expect(
+    page.getByText("Online AI answers are not configured yet", { exact: false }).last(),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create customer and invoice" })).toHaveCount(0);
 
   await sendAssistantMessage(page, "Create an invoice for Aurora Brands");
   await expect(page.getByText("Tell me the amount", { exact: false })).toBeVisible();

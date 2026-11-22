@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/layout/page-header";
+import { SummaryStrip } from "@/components/layout/summary-strip";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { MarkPaidButton } from "@/components/bills/mark-paid-button";
@@ -37,7 +39,7 @@ function StatusBadge({ status, paidDate, dueDate, today }: {
   return (
     <span
       className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-        soon ? "bg-amber-100 text-amber-900" : "bg-gray-100 text-gray-700"
+        soon ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-700"
       }`}
     >
       Upcoming
@@ -57,26 +59,18 @@ export default async function BillsPage({ searchParams }: BillsPageProps) {
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-gray-900">Expenses &amp; Bills</h1>
-        <Link
-          href="/bills/new"
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-        >
-          New bill
-        </Link>
-      </div>
+      <PageHeader eyebrow="Stay ahead of payments" title="Expenses &amp; Bills" description="Plan recurring expenses and keep track of every bill." action={{ href: "/bills/new", label: "New bill" }} />
 
-      <form method="GET" className="mt-6 flex flex-wrap items-end gap-3 text-sm">
+      <form key={JSON.stringify([params.from, params.to, status])} method="GET" className="cp-filter-bar">
         <div>
-          <label htmlFor="status" className="block font-medium text-gray-800">
+          <label htmlFor="status" className="block font-medium text-slate-800">
             Status
           </label>
           <select
             id="status"
             name="status"
             defaultValue={status ?? ""}
-            className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+            className="mt-1 cp-input"
           >
             <option value="">All statuses</option>
             <option value="UPCOMING">Upcoming</option>
@@ -85,7 +79,7 @@ export default async function BillsPage({ searchParams }: BillsPageProps) {
           </select>
         </div>
         <div>
-          <label htmlFor="from" className="block font-medium text-gray-800">
+          <label htmlFor="from" className="block font-medium text-slate-800">
             From
           </label>
           <input
@@ -93,11 +87,11 @@ export default async function BillsPage({ searchParams }: BillsPageProps) {
             name="from"
             type="date"
             defaultValue={range.success ? range.data.from : today}
-            className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+            className="mt-1 cp-input"
           />
         </div>
         <div>
-          <label htmlFor="to" className="block font-medium text-gray-800">
+          <label htmlFor="to" className="block font-medium text-slate-800">
             To
           </label>
           <input
@@ -105,12 +99,12 @@ export default async function BillsPage({ searchParams }: BillsPageProps) {
             name="to"
             type="date"
             defaultValue={range.success ? range.data.to : ""}
-            className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
+            className="mt-1 cp-input"
           />
         </div>
         <button
           type="submit"
-          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50"
+          className="cp-button-secondary"
         >
           Show
         </button>
@@ -140,17 +134,23 @@ async function BillsTable({
 
   if (rows.length === 0) {
     return (
-      <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-700">
+      <div className="mt-6 cp-panel p-6 text-sm text-slate-700">
         No bills yet. Add rent, salaries or subscriptions to see them in your forecast.
       </div>
     );
   }
 
   return (
-    <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50 text-left text-gray-600">
-          <tr>
+    <>
+      <SummaryStrip label="Bills in selected range" items={[
+        { label: "Bills shown", value: rows.length, detail: "In the selected date range and status", tone: "primary" },
+        { label: "Unpaid", value: formatINR(rows.filter((row) => row.status !== "PAID").reduce((sum, row) => sum + row.amountPaise, 0)), detail: "Across the bills shown" },
+        { label: "Paid", value: formatINR(rows.filter((row) => row.status === "PAID").reduce((sum, row) => sum + row.amountPaise, 0)), detail: "Settled bills in this view" },
+      ]} />
+    <div className="mt-6 overflow-x-auto cp-panel">
+      <table role="table" className="cp-table divide-y divide-slate-200">
+        <thead className="bg-slate-50 text-left text-slate-600">
+          <tr role="row">
             <th scope="col" className="px-4 py-3 font-medium">Title</th>
             <th scope="col" className="px-4 py-3 font-medium">Category</th>
             <th scope="col" className="px-4 py-3 font-medium">Due date</th>
@@ -159,18 +159,18 @@ async function BillsTable({
             <th scope="col" className="px-4 py-3 font-medium">Action</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-slate-100">
           {rows.map((row) => (
-            <tr key={`${row.billId}-${row.dueDate}`}>
-              <td className="px-4 py-3 text-gray-900">
+            <tr role="row" key={`${row.billId}-${row.dueDate}`}>
+              <td role="cell" data-label="Title" className="px-4 py-3 text-slate-900">
                 <Link href={`/bills/${row.billId}/edit`} className="font-medium hover:underline">
                   {row.title}
                 </Link>
               </td>
-              <td className="px-4 py-3 text-gray-700">{row.category}</td>
-              <td className="px-4 py-3 text-gray-700">{row.dueDate}</td>
-              <td className="px-4 py-3 text-right text-gray-900">{formatINR(row.amountPaise)}</td>
-              <td className="px-4 py-3">
+              <td role="cell" data-label="Category" className="px-4 py-3 text-slate-700">{row.category}</td>
+              <td role="cell" data-label="Due date" className="px-4 py-3 text-slate-700">{row.dueDate}</td>
+              <td role="cell" data-label="Amount" className="px-4 py-3 text-right text-slate-900">{formatINR(row.amountPaise)}</td>
+              <td role="cell" data-label="Status" className="px-4 py-3">
                 <StatusBadge
                   status={row.status}
                   paidDate={row.paidDate}
@@ -178,7 +178,7 @@ async function BillsTable({
                   today={today}
                 />
               </td>
-              <td className="px-4 py-3">
+              <td role="cell" data-label="Action" className="px-4 py-3">
                 {row.status !== "PAID" && (
                   <MarkPaidButton
                     billId={row.billId}
@@ -192,5 +192,6 @@ async function BillsTable({
         </tbody>
       </table>
     </div>
+    </>
   );
 }

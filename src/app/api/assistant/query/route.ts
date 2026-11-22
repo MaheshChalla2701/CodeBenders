@@ -8,7 +8,7 @@ import {
   serviceErrorResponse,
 } from "@/lib/api/respond";
 import { assistantQuerySchema } from "@/lib/schemas/assistant";
-import { askAssistant } from "@/lib/services/assistant";
+import { answerAssistant } from "@/lib/services/assistant";
 
 export const runtime = "nodejs";
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   try {
     return jsonResponse({
       success: true,
-      data: await askAssistant(parsed.data.message, parsed.data.history ?? []),
+      data: await answerAssistant(parsed.data.message, parsed.data.history ?? []),
     });
   } catch (error) {
     return serviceErrorResponse(error);

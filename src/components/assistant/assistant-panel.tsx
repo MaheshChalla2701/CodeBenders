@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { AssistantStatus } from "@/lib/services/assistant";
 import { parsePendingInvoiceReply } from "@/lib/assistant/invoice-command";
+import type { AssistantAgent, AssistantRoute } from "@/lib/assistant/router";
 import {
   FALLBACK_ERROR,
   InvoiceMessageBody,
@@ -31,7 +32,7 @@ import {
   type InvoiceMessage,
 } from "@/components/assistant/invoice-command-chat";
 
-type QueryResult = { answer: string; factsUsed: string[] };
+type QueryResult = { answer: string; factsUsed: string[]; agent: AssistantAgent };
 type ApiResponse<T> = {
   success?: boolean;
   data?: T;
@@ -43,6 +44,7 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   factsUsed?: string[];
+  agent?: AssistantAgent;
   tone?: "default" | "error";
 };
 type InvoiceEntry = { kind: "invoice"; message: InvoiceMessage };
@@ -59,6 +61,14 @@ const SUGGESTIONS = [
 ];
 const MAX_HISTORY_ENTRIES = 10;
 const MAX_HISTORY_CONTENT = 2000;
+const AGENT_LABELS: Record<AssistantAgent, string> = {
+  invoice: "Invoice agent",
+  forecast: "Forecast agent",
+  receivables: "Receivables agent",
+  bills: "Bills agent",
+  reminder: "Reminder agent",
+  direct: "Direct AI",
+};
 
 function assistantUnavailableMessage(status: AssistantStatus): string {
   if (!status.configured) {
@@ -76,6 +86,15 @@ function localConversationReply(text: string): string | null {
     return "You’re welcome. Ask me whenever you want to check your finances or prepare another invoice draft.";
   }
   return null;
+}
+
+function cleanAssistantFormatting(content: string): string {
+  return content
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*\n]+)\*/g, "$1")
+    .replace(/^\s*[-*]\s+/gm, "• ")
+    .replace(/^\s*#{1,6}\s+/gm, "")
+    .trim();
 }
 
 export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStatus }) {
@@ -101,7 +120,7 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
 
   function appendAssistantMessage(
     content: string,
-    options: Pick<ChatMessage, "factsUsed" | "tone"> = {},
+    options: Pick<ChatMessage, "factsUsed" | "agent" | "tone"> = {},
   ) {
     const message: ChatMessage = {
       kind: "chat",
@@ -242,7 +261,23 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
             : `I could not answer right now (HTTP ${response.status}). Please try again.`),
       );
     }
-    appendAssistantMessage(json.data.answer, { factsUsed: json.data.factsUsed });
+    appendAssistantMessage(json.data.answer, {
+      factsUsed: json.data.factsUsed,
+      agent: json.data.agent,
+    });
+  }
+
+  async function selectAgent(text: string): Promise<AssistantRoute> {
+    const response = await fetch("/api/assistant/route", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
+    });
+    const json = (await response.json().catch(() => null)) as ApiResponse<AssistantRoute> | null;
+    if (!response.ok || !json?.data) {
+      throw new Error(json?.error?.message ?? "I could not route that message. Please try again.");
+    }
+    return json.data;
   }
 
   async function sendMessage(textValue = input, appendUser = true) {
@@ -281,19 +316,25 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
         return;
       }
 
-      const prepared = await prepareInvoiceCommand(text).catch(() => null);
-      if (prepared && isInvoiceCommand(prepared)) {
-        if (activeInvoice) resolveInvoice(activeInvoice.id);
-        const replyId = nextId();
-        setMessages((current) => [
-          ...current,
-          { kind: "invoice", message: invoiceReply(replyId, prepared) },
-        ]);
+      const route = await selectAgent(text);
+      if (route.agent === "invoice") {
+        const prepared = await prepareInvoiceCommand(text);
+        if (isInvoiceCommand(prepared)) {
+          if (activeInvoice) resolveInvoice(activeInvoice.id);
+          const replyId = nextId();
+          setMessages((current) => [
+            ...current,
+            { kind: "invoice", message: invoiceReply(replyId, prepared) },
+          ]);
+        } else {
+          appendAssistantMessage(prepared.message, { agent: "invoice", tone: "error" });
+        }
         return;
       }
-      if (prepared?.status === "error" && /\b(?:invoice|bill)\b/i.test(text)) {
-        appendAssistantMessage(prepared.message, { tone: "error" });
-        return;
+
+      if (activeInvoice) {
+        resolveInvoice(activeInvoice.id);
+        appendInvoiceText("Closed the unfinished invoice proposal. Nothing was saved.");
       }
 
       if (!status.available) {
@@ -429,10 +470,10 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
   }
 
   return (
-    <section className="flex h-full min-h-[560px] flex-col">
-      <header className="flex flex-col items-stretch gap-3 border-b border-slate-200 px-1 pb-4 pt-1 sm:flex-row sm:items-center sm:justify-between sm:px-2">
+    <section className="flex h-full min-h-[560px] flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <header className="flex flex-col items-stretch gap-3 border-b border-slate-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-800 text-white shadow-sm">
             <Sparkles className="h-5 w-5" aria-hidden="true" />
             <span
               className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${
@@ -467,7 +508,7 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
               aria-label="Turn off online AI"
               disabled={consentPending}
               onClick={() => void updateConsent(false)}
-              className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-medium text-slate-500 transition hover:bg-slate-200/70 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-xs font-medium text-slate-500 transition hover:bg-slate-200/70 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
             >
               <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
               <span>
@@ -486,7 +527,7 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
             type="button"
             onClick={startNewConversation}
             disabled={pending}
-            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">New chat</span>
@@ -500,13 +541,13 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
       )}
 
       {status.configured && !status.consented && (
-        <div className="mx-1 mt-3 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 sm:mx-2">
+        <div className="mx-4 mt-3 rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 sm:mx-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-start gap-3">
-              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-indigo-700" aria-hidden="true" />
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-teal-700" aria-hidden="true" />
               <div>
-                <p className="text-sm font-semibold text-indigo-950">Enable online financial Q&amp;A?</p>
-                <p className="mt-0.5 max-w-3xl text-xs leading-5 text-indigo-800">
+                <p className="text-sm font-semibold text-teal-950">Enable online financial Q&amp;A?</p>
+                <p className="mt-0.5 max-w-3xl text-xs leading-5 text-teal-800">
                   Only the minimum financial facts needed for your question are sent to Groq. Your
                   local database and contact details stay on this computer.
                 </p>
@@ -516,7 +557,7 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
               type="button"
               disabled={consentPending}
               onClick={() => void updateConsent(true)}
-              className="min-h-10 rounded-lg bg-indigo-700 px-4 text-sm font-semibold text-white transition hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-700 focus:ring-offset-2 disabled:opacity-60"
+              className="min-h-10 rounded-lg bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2 disabled:opacity-60"
             >
               {consentPending ? "Enabling…" : "Enable online AI"}
             </button>
@@ -526,7 +567,7 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
       )}
 
       {!status.configured && (
-        <div className="mx-1 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs leading-5 text-amber-900 sm:mx-2">
+        <div className="mx-4 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs leading-5 text-amber-900 sm:mx-6">
           Online answers need <code>GROQ_API_KEY</code> and <code>GROQ_MODEL</code> in <code>.env</code>.
           Invoice commands remain available locally.
         </div>
@@ -536,11 +577,11 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
         role="log"
         aria-live="polite"
         aria-label="Conversation with CashPilot"
-        className="min-h-0 flex-1 overflow-y-auto px-1 py-6 sm:px-3"
+        className="min-h-0 flex-1 overflow-y-auto bg-slate-50/70 px-4 py-6 sm:px-6"
       >
         {messages.length === 0 && !pending && (
           <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center py-8 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-sm">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-800 text-white shadow-sm">
               <Bot className="h-7 w-7" aria-hidden="true" />
             </div>
             <h2 className="mt-4 text-xl font-semibold text-slate-950">What can I help you with?</h2>
@@ -554,10 +595,10 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
                   key={suggestion.label}
                   type="button"
                   onClick={() => void sendMessage(suggestion.prompt)}
-                  className="group flex min-h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
+                  className="group flex min-h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2"
                 >
                   {index === SUGGESTIONS.length - 1 ? (
-                    <FilePlus2 className="h-4 w-4 shrink-0 text-indigo-600" aria-hidden="true" />
+                    <FilePlus2 className="h-4 w-4 shrink-0 text-teal-600" aria-hidden="true" />
                   ) : (
                     <Sparkles className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
                   )}
@@ -574,7 +615,7 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
               const message = entry.message;
               return (
                 <div key={message.id} className="flex items-start gap-2.5 sm:gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-white">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-800 text-white">
                     <Bot className="h-4 w-4" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 max-w-[88%]">
@@ -598,7 +639,7 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
                 <div key={entry.id} className="flex items-start justify-end gap-2.5 sm:gap-3">
                   <div className="min-w-0 max-w-[88%] text-right">
                     <p className="mb-1 text-xs font-medium text-slate-500">You</p>
-                    <div className="whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-slate-950 px-4 py-2.5 text-left text-sm leading-6 text-white shadow-sm">
+                    <div className="whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-teal-800 px-4 py-2.5 text-left text-sm leading-6 text-white shadow-sm">
                       {entry.content}
                     </div>
                   </div>
@@ -615,13 +656,20 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
                     entry.tone === "error"
                       ? "bg-red-100 text-red-700"
-                      : "bg-slate-950 text-white"
+                      : "bg-teal-800 text-white"
                   }`}
                 >
                   <Bot className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <div className="min-w-0 max-w-[88%]">
-                  <p className="mb-1 text-xs font-medium text-slate-500">CashPilot</p>
+                  <p className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-500">
+                    <span>CashPilot</span>
+                    {entry.agent && (
+                      <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                        {AGENT_LABELS[entry.agent]}
+                      </span>
+                    )}
+                  </p>
                   <div
                     className={`rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-6 ${
                       entry.tone === "error"
@@ -629,7 +677,7 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
                         : "bg-white text-slate-800 shadow-sm ring-1 ring-slate-200/80"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{entry.content}</p>
+                    <p className="whitespace-pre-wrap break-words">{cleanAssistantFormatting(entry.content)}</p>
                     {entry.factsUsed && entry.factsUsed.length > 0 && (
                       <details className="mt-3 border-t border-slate-200 pt-2 text-xs text-slate-500">
                         <summary className="cursor-pointer font-medium text-slate-600">Sources used</summary>
@@ -656,7 +704,7 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
 
           {pending && (
             <div className="flex items-start gap-2.5 sm:gap-3" aria-label="CashPilot is thinking">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-white">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-800 text-white">
                 <Bot className="h-4 w-4" aria-hidden="true" />
               </div>
               <div>
@@ -674,10 +722,10 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
         </div>
       </div>
 
-      <div className="bg-[#f7f7f5]/95 px-1 pb-1 pt-3 backdrop-blur sm:px-3">
+      <div className="border-t border-slate-100 bg-white px-4 pb-4 pt-4 sm:px-6">
         <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
           <label htmlFor="assistant-question" className="sr-only">Message CashPilot</label>
-          <div className="flex items-end gap-2 rounded-2xl border border-slate-300 bg-white p-2 shadow-md shadow-slate-200/60 transition focus-within:border-slate-500 focus-within:ring-2 focus-within:ring-slate-200">
+          <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm transition focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100">
             <textarea
               ref={inputRef}
               id="assistant-question"
@@ -688,13 +736,13 @@ export function AssistantPanel({ initialStatus }: { initialStatus: AssistantStat
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask about your cash flow or create an invoice…"
-              className="max-h-32 min-h-10 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-60"
+              className="max-h-32 min-h-10 min-w-0 flex-1 resize-none border-0 bg-transparent px-2 py-2 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-60"
             />
             <button
               type="submit"
               aria-label="Send message"
               disabled={pending || !input.trim()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-800 text-white transition hover:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               <ArrowUp className="h-5 w-5" aria-hidden="true" />
             </button>

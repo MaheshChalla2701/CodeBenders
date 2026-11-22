@@ -55,7 +55,7 @@ export function InvoiceActions({ invoiceId, lifecycle, outstandingPaise, default
         <a
           href={`/api/invoices/${invoiceId}/pdf`}
           download
-          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100"
+          className="cp-button-secondary"
         >
           Download PDF
         </a>
@@ -64,7 +64,7 @@ export function InvoiceActions({ invoiceId, lifecycle, outstandingPaise, default
           <>
             <Link
               href={`/invoices/${invoiceId}/edit`}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100"
+              className="cp-button-secondary"
             >
               Edit draft
             </Link>
@@ -72,7 +72,7 @@ export function InvoiceActions({ invoiceId, lifecycle, outstandingPaise, default
               type="button"
               onClick={handleIssue}
               disabled={pending}
-              className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-60"
+              className="cp-button-primary disabled:opacity-60"
             >
               {pending ? "Issuing..." : "Issue invoice"}
             </button>
@@ -83,14 +83,14 @@ export function InvoiceActions({ invoiceId, lifecycle, outstandingPaise, default
           <button
             type="button"
             onClick={() => setShowPayment(true)}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            className="cp-button-primary"
           >
             Record payment
           </button>
         )}
       </div>
 
-      {isIssued && <p className="text-sm text-gray-600">Issued invoices are locked. Record payments instead.</p>}
+      {isIssued && <p className="text-sm text-slate-600">Issued invoices are locked. Record payments instead.</p>}
 
       {actionError && (
         <p role="alert" className="text-sm text-red-600">

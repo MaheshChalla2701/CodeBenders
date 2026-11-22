@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   parseInvoiceCommand,
   parsePendingInvoiceReply,
+  isInvoiceCommandText,
   matchCustomers,
   normaliseName,
   type CustomerCandidate,
@@ -73,6 +74,27 @@ describe("parseInvoiceCommand", () => {
     expect(parseInvoiceCommand("add invoice of 5000")).toEqual({
       error: "Tell me the customer name, for example 'in ABC'",
     });
+  });
+});
+
+describe("isInvoiceCommandText", () => {
+  it.each([
+    "Will I have enough cash for bills in the next 30 days?",
+    "Which invoices are overdue by 30 days?",
+    "Show invoice INV-0017",
+    "How much is my next bill?",
+    "add bill 800 for Hosting",
+  ])("does not treat a financial question as a creation command: %s", (message) => {
+    expect(isInvoiceCommandText(message)).toBe(false);
+  });
+
+  it.each([
+    "Create an invoice of 5000 for ABC",
+    "draft invoice 800 for Hosting",
+    "prepare invoice 2500 for Aurora Brands",
+    "invoice ABC 5000",
+  ])("recognizes a creation command: %s", (message) => {
+    expect(isInvoiceCommandText(message)).toBe(true);
   });
 });
 

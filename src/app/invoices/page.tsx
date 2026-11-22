@@ -1,3 +1,6 @@
+import { InvoiceStatusBadge } from "@/components/invoices/invoice-status-badge";
+import { PageHeader } from "@/components/layout/page-header";
+import { SummaryStrip } from "@/components/layout/summary-strip";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { formatINR } from "@/lib/financial/money";
@@ -22,12 +25,8 @@ const STATUS_OPTIONS: { value: NonNullable<InvoiceListFilters["status"]>; label:
   { value: "OVERDUE", label: "Overdue" },
 ];
 
-const STATUS_LABELS: Record<string, string> = Object.fromEntries(
-  STATUS_OPTIONS.map((option) => [option.value, option.label]),
-);
-
 const selectClass =
-  "rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900";
+  "cp-input";
 
 export default async function InvoicesPage({ searchParams }: InvoicesPageProps) {
   const params = await searchParams;
@@ -46,19 +45,17 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Invoices</h1>
-        <Link
-          href="/invoices/new"
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-        >
-          New invoice
-        </Link>
-      </div>
+      <PageHeader eyebrow="Get paid with confidence" title="Invoices" description="Create invoices, track collections, and follow up on outstanding payments." action={{ href: "/invoices/new", label: "New invoice" }} />
 
-      <form method="GET" action="/invoices" className="mt-6 flex flex-wrap items-end gap-2">
+      <SummaryStrip label="Invoice overview" items={[
+        { label: "Invoices shown", value: invoices.length, detail: hasFilters ? "Matching your filters" : "Across all invoice statuses", tone: "primary" },
+        { label: "Outstanding on issued invoices", value: formatINR(invoices.filter((invoice) => invoice.lifecycle === "ISSUED").reduce((sum, invoice) => sum + invoice.outstandingPaise, 0)), detail: "For the invoices shown" },
+        { label: "Overdue", value: formatINR(invoices.filter((invoice) => invoice.overdueDays > 0 && invoice.lifecycle === "ISSUED").reduce((sum, invoice) => sum + invoice.outstandingPaise, 0)), detail: "Outstanding payments past their due date", tone: "danger" },
+      ]} />
+
+      <form key={JSON.stringify([status, customerId, search, dueFrom, dueTo])} method="GET" action="/invoices" className="cp-filter-bar">
         <div>
-          <label htmlFor="status" className="block text-xs font-medium text-gray-700">
+          <label htmlFor="status" className="block text-xs font-medium text-slate-700">
             Status
           </label>
           <select id="status" name="status" defaultValue={status ?? ""} className={selectClass}>
@@ -71,7 +68,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           </select>
         </div>
         <div>
-          <label htmlFor="dueFrom" className="block text-xs font-medium text-gray-700">
+          <label htmlFor="dueFrom" className="block text-xs font-medium text-slate-700">
             Due from
           </label>
           <input
@@ -83,7 +80,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           />
         </div>
         <div>
-          <label htmlFor="dueTo" className="block text-xs font-medium text-gray-700">
+          <label htmlFor="dueTo" className="block text-xs font-medium text-slate-700">
             Due to
           </label>
           <input
@@ -96,7 +93,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           />
         </div>
         <div>
-          <label htmlFor="customerId" className="block text-xs font-medium text-gray-700">
+          <label htmlFor="customerId" className="block text-xs font-medium text-slate-700">
             Customer
           </label>
           <select id="customerId" name="customerId" defaultValue={customerId ?? ""} className={selectClass}>
@@ -109,7 +106,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           </select>
         </div>
         <div>
-          <label htmlFor="search" className="block text-xs font-medium text-gray-700">
+          <label htmlFor="search" className="block text-xs font-medium text-slate-700">
             Search
           </label>
           <input
@@ -123,23 +120,24 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         </div>
         <button
           type="submit"
-          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-100"
+          className="cp-button-secondary"
         >
           Apply
         </button>
+        {hasFilters && <Link href="/invoices" className="cp-button-secondary">Clear filters</Link>}
       </form>
 
       {invoices.length === 0 ? (
-        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-          <p className="text-sm text-gray-600">
+        <div className="mt-6 cp-panel p-6">
+          <p className="text-sm text-slate-600">
             {hasFilters ? "No invoices match these filters." : "No invoices yet."}
           </p>
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50 text-left text-gray-600">
-              <tr>
+        <div className="mt-6 overflow-x-auto cp-panel">
+          <table role="table" className="cp-table divide-y divide-slate-200">
+            <thead className="bg-slate-50 text-left text-slate-600">
+              <tr role="row">
                 <th scope="col" className="px-4 py-3 font-medium">Invoice</th>
                 <th scope="col" className="px-4 py-3 font-medium">Customer</th>
                 <th scope="col" className="px-4 py-3 font-medium">Issued</th>
@@ -150,34 +148,34 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
                 <th scope="col" className="px-4 py-3 font-medium">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {invoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
+                <tr role="row" key={invoice.id} className="hover:bg-slate-50">
+                  <td role="cell" data-label="Invoice" className="px-4 py-3">
                     <Link
                       href={`/invoices/${invoice.id}`}
-                      className="font-medium text-gray-900 hover:underline"
+                      className="font-medium text-slate-900 hover:underline"
                     >
                       {invoice.invoiceNumber}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{invoice.customer.name}</td>
-                  <td className="px-4 py-3 text-gray-700">{invoice.issueDate}</td>
-                  <td className="px-4 py-3 text-gray-700">
+                  <td role="cell" data-label="Customer" className="px-4 py-3 text-slate-700">{invoice.customer.name}</td>
+                  <td role="cell" data-label="Issued" className="px-4 py-3 text-slate-700">{invoice.issueDate}</td>
+                  <td role="cell" data-label="Due" className="px-4 py-3 text-slate-700">
                     {invoice.dueDate}
-                    {invoice.overdueDays > 0 && (
+                    {invoice.overdue && (
                       <span className="ml-2 text-xs font-medium text-red-700">
                         {invoice.overdueDays} {invoice.overdueDays === 1 ? "day" : "days"} overdue
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-900">{formatINR(invoice.totalPaise)}</td>
-                  <td className="px-4 py-3 text-right text-gray-700">{formatINR(invoice.paidPaise)}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">
+                  <td role="cell" data-label="Total" className="px-4 py-3 text-right text-slate-900">{formatINR(invoice.totalPaise)}</td>
+                  <td role="cell" data-label="Received" className="px-4 py-3 text-right text-slate-700">{formatINR(invoice.paidPaise)}</td>
+                  <td role="cell" data-label="Outstanding" className="px-4 py-3 text-right text-slate-900">
                     {formatINR(invoice.outstandingPaise)}
                   </td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {STATUS_LABELS[invoice.status] ?? invoice.status}
+                  <td role="cell" data-label="Status" className="px-4 py-3 text-slate-700">
+                    <InvoiceStatusBadge status={invoice.status} />
                   </td>
                 </tr>
               ))}

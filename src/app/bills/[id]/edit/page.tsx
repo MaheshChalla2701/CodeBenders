@@ -24,10 +24,11 @@ export default async function EditBillPage({ params }: EditBillPageProps) {
 
   return (
     <AppShell>
-      <h1 className="text-2xl font-semibold text-gray-900">Edit bill</h1>
-      <p className="mt-1 text-sm text-gray-600">{bill.title}</p>
+      <p className="cp-eyebrow">Expense planning</p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">Edit bill</h1>
+      <p className="mt-1 text-sm text-slate-600">{bill.title}</p>
 
-      <div className="mt-6 max-w-xl rounded-lg border border-gray-200 bg-white p-6">
+      <div className="cp-form-card">
         <BillForm
           mode="edit"
           billId={bill.id}
@@ -42,10 +43,10 @@ export default async function EditBillPage({ params }: EditBillPageProps) {
         />
       </div>
 
-      <div className="mt-6 max-w-xl rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="text-base font-semibold text-gray-900">Archive</h2>
+      <div className="cp-form-card">
+        <h2 className="text-base font-semibold text-slate-900">Archive</h2>
         {bill.archivedOn !== null ? (
-          <p className="mt-2 text-sm text-gray-700">
+          <p className="mt-2 text-sm text-slate-700">
             This bill was archived on {bill.archivedOn}. Its paid history is kept.
           </p>
         ) : (

@@ -14,6 +14,14 @@ export const assistantQuerySchema = z.object({
   history: z.array(assistantHistoryEntrySchema).max(10).optional(),
 });
 
+export const assistantRouteSchema = z.object({
+  message: z
+    .string()
+    .trim()
+    .min(1, "Type a message")
+    .max(1000, "Message must be 1,000 characters or fewer"),
+});
+
 export type AssistantHistoryEntry = z.infer<typeof assistantHistoryEntrySchema>;
 
 export const assistantConsentSchema = z.object({

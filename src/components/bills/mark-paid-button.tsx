@@ -71,7 +71,7 @@ export function MarkPaidButton({ billId, dueDate, amountPaise }: MarkPaidButtonP
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className="rounded-md border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-60"
+        className="cp-button-secondary disabled:opacity-60"
       >
         {pending ? "Saving..." : "Mark paid"}
       </button>

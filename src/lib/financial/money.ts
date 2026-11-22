@@ -23,7 +23,7 @@ export function formatINR(paise: number): string {
   const grouped = groupIndian(rupees.toString());
   const body =
     remainder === 0 ? grouped : `${grouped}.${remainder.toString().padStart(2, "0")}`;
-  return `${negative ? "-" : ""}₹${body}`;
+  return `${negative ? "-" : ""}\u20B9${body}`;
 }
 
 function groupIndian(digits: string): string {

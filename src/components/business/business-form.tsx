@@ -46,8 +46,8 @@ const EMPTY_VALUES: FormValues = {
 };
 
 const inputClass =
-  "mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900";
-const labelClass = "block text-sm font-medium text-gray-800";
+  "mt-1 w-full cp-input";
+const labelClass = "block text-sm font-medium text-slate-800";
 
 function FieldError({ messages }: { messages?: string[] }) {
   if (!messages || messages.length === 0) {
@@ -122,11 +122,11 @@ export function BusinessForm({ mode, initial }: BusinessFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="grid gap-5 sm:grid-cols-2">
       {mode === "edit" && (
         <div
           role="alert"
-          className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
+          className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
         >
           Changing the opening balance or its date changes every cash forecast.
         </div>
@@ -164,7 +164,7 @@ export function BusinessForm({ mode, initial }: BusinessFormProps) {
         <FieldError messages={fieldErrors.phone} />
       </div>
 
-      <div>
+      <div className="sm:col-span-2">
         <label htmlFor="address" className={labelClass}>
           Business address
         </label>
@@ -195,7 +195,7 @@ export function BusinessForm({ mode, initial }: BusinessFormProps) {
         <FieldError messages={fieldErrors.openingCashDate} />
       </div>
 
-      <div>
+      <div className="sm:col-span-2">
         <label htmlFor="paymentInstructions" className={labelClass}>
           Payment instructions
         </label>
@@ -209,12 +209,12 @@ export function BusinessForm({ mode, initial }: BusinessFormProps) {
       </div>
 
       {formError && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="sm:col-span-2 text-sm text-red-600">
           {formError}
         </p>
       )}
       {success && (
-        <p role="status" className="text-sm font-medium text-green-700">
+        <p role="status" className="sm:col-span-2 text-sm font-medium text-green-700">
           Business details saved.
         </p>
       )}
@@ -222,7 +222,7 @@ export function BusinessForm({ mode, initial }: BusinessFormProps) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-60"
+        className="cp-button-primary disabled:opacity-60"
       >
         {pending ? "Saving..." : "Save business details"}
       </button>
